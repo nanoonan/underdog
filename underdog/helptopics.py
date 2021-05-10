@@ -30,7 +30,6 @@ The Day class contains 20 years of daily data for a specific ticker.
 """),
 ('IntraDay', """
 The IntraDay class contains about two months of one-minute intraday data for a specific tickers. Includes pre and post market trades.
-The IntraDay class contains about two months of one-minute intraday data for a specific tickers. Includes pre and post market trades.
 """)
 ]
 
