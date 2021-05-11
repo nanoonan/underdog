@@ -170,7 +170,7 @@ market[:]
       <td>77.4600</td>
       <td>76.3000</td>
       <td>2019-04-26</td>
-      <td>76.86806</td>
+      <td>76.868060</td>
     </tr>
     <tr>
       <th>1</th>
@@ -242,7 +242,7 @@ market[:]
       <td>98.7450</td>
       <td>98.7450</td>
       <td>2021-05-10</td>
-      <td>HOLD</td>
+      <td>98.745000</td>
     </tr>
     <tr>
       <th>4531972</th>
@@ -254,7 +254,7 @@ market[:]
       <td>25.9974</td>
       <td>25.9974</td>
       <td>2021-05-10</td>
-      <td>HLGE</td>
+      <td>25.997400</td>
     </tr>
     <tr>
       <th>4531973</th>
@@ -266,7 +266,7 @@ market[:]
       <td>30.6740</td>
       <td>30.6740</td>
       <td>2021-05-10</td>
-      <td>HEWC</td>
+      <td>30.674000</td>
     </tr>
     <tr>
       <th>4531974</th>
@@ -278,7 +278,7 @@ market[:]
       <td>24.8450</td>
       <td>24.8450</td>
       <td>2021-05-10</td>
-      <td>IBCE</td>
+      <td>24.845000</td>
     </tr>
     <tr>
       <th>4531975</th>
@@ -290,7 +290,7 @@ market[:]
       <td>38.2801</td>
       <td>38.2801</td>
       <td>2021-05-10</td>
-      <td>JHCS</td>
+      <td>38.280100</td>
     </tr>
   </tbody>
 </table>
@@ -492,5 +492,141 @@ df[df['trading_segment'] == 2]
 
 
 ```python
-
+from underdog import Day
+# Last 20 years of daily XOM data
+df = Day('XOM')[:]
+df
 ```
+
+
+
+
+<div>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>open</th>
+      <th>high</th>
+      <th>low</th>
+      <th>close</th>
+      <th>volume</th>
+      <th>date</th>
+      <th>twap</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>44.650</td>
+      <td>44.69</td>
+      <td>44.0150</td>
+      <td>44.050</td>
+      <td>10117200</td>
+      <td>2001-05-10</td>
+      <td>44.353115</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>44.050</td>
+      <td>44.05</td>
+      <td>43.3250</td>
+      <td>43.820</td>
+      <td>8956400</td>
+      <td>2001-05-11</td>
+      <td>43.681112</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>44.100</td>
+      <td>44.72</td>
+      <td>44.0500</td>
+      <td>44.530</td>
+      <td>9779400</td>
+      <td>2001-05-14</td>
+      <td>44.393036</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>44.530</td>
+      <td>44.77</td>
+      <td>44.3250</td>
+      <td>44.725</td>
+      <td>9016800</td>
+      <td>2001-05-15</td>
+      <td>44.543466</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>44.725</td>
+      <td>45.00</td>
+      <td>44.5200</td>
+      <td>44.750</td>
+      <td>16337000</td>
+      <td>2001-05-16</td>
+      <td>44.760015</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>5027</th>
+      <td>59.000</td>
+      <td>59.50</td>
+      <td>58.5100</td>
+      <td>59.190</td>
+      <td>23522218</td>
+      <td>2021-05-04</td>
+      <td>59.004164</td>
+    </tr>
+    <tr>
+      <th>5028</th>
+      <td>59.770</td>
+      <td>61.05</td>
+      <td>60.4800</td>
+      <td>60.970</td>
+      <td>17323686</td>
+      <td>2021-05-05</td>
+      <td>60.503865</td>
+    </tr>
+    <tr>
+      <th>5029</th>
+      <td>60.860</td>
+      <td>61.64</td>
+      <td>60.0300</td>
+      <td>61.550</td>
+      <td>26836752</td>
+      <td>2021-05-06</td>
+      <td>60.817193</td>
+    </tr>
+    <tr>
+      <th>5030</th>
+      <td>61.070</td>
+      <td>62.47</td>
+      <td>60.8488</td>
+      <td>62.430</td>
+      <td>33610609</td>
+      <td>2021-05-07</td>
+      <td>61.640058</td>
+    </tr>
+    <tr>
+      <th>5031</th>
+      <td>63.240</td>
+      <td>64.02</td>
+      <td>62.5300</td>
+      <td>62.580</td>
+      <td>31956561</td>
+      <td>2021-05-10</td>
+      <td>63.293827</td>
+    </tr>
+  </tbody>
+</table>
+<p>5032 rows × 7 columns</p>
+</div>
