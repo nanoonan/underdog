@@ -14,10 +14,9 @@ info()
 
 **Requires**: Python 3.8+
 
-The *underdog* package provides Python classes and functions to easily access free equity-related data through Panda dataframes. Data is cached on disk to improve performance and limit API requests to the data providers (which often rate limit the APIs). Currently, data is pulled from [Polygon](https://polygon.io), [finViz](https://finviz.com), and TD Ameritrade.
+The *underdog* package provides Python classes and functions to easily access free equity-related data via Panda DataFrames. Data is automatically downloaded, kept up to date, and cached on disk for convenience and to improve performance and limit API requests to the data providers (which often rate limit the APIs). Currently, data is pulled from [Polygon](https://polygon.io), [finviz](https://finviz.com), and TD Ameritrade.
 
 Feel free to send questions, comments or feedback to: nanoonan at marvinsmind dot com.
-
 
 ## Installation
 

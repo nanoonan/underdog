@@ -77,7 +77,6 @@ class AsyncThread(threading.Thread):
             selector = selectors.SelectSelector()
             self._loop = asyncio.SelectorEventLoop(selector)
             asyncio.set_event_loop(self._loop)
-            # self._loop = asyncio.new_event_loop()
             self._loop.run_forever()
         finally:
             self._loop.run_until_complete(self._loop.shutdown_asyncgens())
