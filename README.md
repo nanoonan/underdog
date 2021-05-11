@@ -1,5 +1,5 @@
 ```python
-from underdog import help
+from underdog import info
 ```
 
 ## Overview
@@ -30,7 +30,7 @@ python -m pip install .
 
 
 ```python
-help('environment')
+info('environment')
 ```
 
     ╒════════════════════════╤═══════════════════════════════════════════════╕
@@ -52,17 +52,17 @@ help('environment')
 
 
 ```python
-help()
+info()
 ```
 
-    help(topic: str) -> useful information
-    Valid help topics: environment, classes, functions
+    info(topic: str) -> useful information
+    Valid info topics: environment, classes, functions
 
 
 
 ```python
 # The main classes for accessing historic data
-help('classes')
+info('classes')
 ```
 
     ╒═════════════════════════╤════════════════════════════════════════════════════════════════════════╕
@@ -97,7 +97,7 @@ help('classes')
 
 
 ```python
-help('functions')
+info('functions')
 ```
 
     ╒═════════════════════════╤═══════════════════════════════════════════════════════════════════════╕

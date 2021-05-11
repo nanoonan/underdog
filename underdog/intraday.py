@@ -23,7 +23,6 @@ logger = logging.getLogger(__name__)
 
 def build_dataframe(
     rows: List[Dict[str, Any]],
-    symbol: str,
     period: int = 1
 ) -> Optional[pd.DataFrame]:
     if not rows:
@@ -68,7 +67,7 @@ def intraday(symbol: str) -> pd.DataFrame:
             need_extended_hours_data = True
         )
         assert result.status_code == 200, result.raise_for_status()
-        return build_dataframe(result.json()['candles'], symbol)
+        return build_dataframe(result.json()['candles'])
     except Exception as exc:
         logger.error(str(exc))
         return None
@@ -80,7 +79,7 @@ class IntraDay(TDAHistoric):
         symbol: str,
         period: int = 1
     ):
-        assert period == 1 or period == 5 or period == 30
+        assert period in [1, 5, 30]
         super().__init__(
             symbol, '{0}/{1}'.format(constants.INTRADAY_PATH, period), 'timestamp',
             Timespan.Minute, period
@@ -113,7 +112,7 @@ class IntraDay(TDAHistoric):
                 need_extended_hours_data = True
             )
             assert result.status_code == 200, result.raise_for_status()
-            return build_dataframe(result.json()['candles'], self.symbol, self.period)
+            return build_dataframe(result.json()['candles'], self.period)
         except Exception as exc:
             logger.error(str(exc))
             return None

@@ -72,18 +72,18 @@ Account id for your TDA trading account.
 
 logger = logging.getLogger(__name__)
 
-def help(
+def info(
     topic: Optional[str] = None,
-    format: Optional[str] = 'fancy_grid',
+    style: Optional[str] = 'fancy_grid',
     return_df: bool = False
 ):
     if not topic:
-        print('help(topic: str) -> useful information')
-        print('Valid help topics: environment, classes, functions')
-        return
+        print('info(topic: str) -> useful information')
+        print('Valid info topics: environment, classes, functions')
+        return None
     if topic not in content:
-        print('{0} is not a valid help topic'.format(topic))
-        return
+        print('{0} is not a valid info topic'.format(topic))
+        return None
     rows = []
     headers = list(content[topic][0])
     for i in range(1, len(content[topic])):
@@ -92,6 +92,6 @@ def help(
         item[content[topic][0][1]] = '\n'.join(textwrap.wrap(content[topic][i][1]))
         rows.append(item)
     df = pd.DataFrame(rows)
-    if format:
-        print(tabulate(df, showindex = False, headers = headers, tablefmt = format))
+    if style:
+        print(tabulate(df, showindex = False, headers = headers, tablefmt = style))
     return df if return_df else None

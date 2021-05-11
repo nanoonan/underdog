@@ -5,7 +5,7 @@ from underdog.finviz import (
     ticker_details,
     ticker_news
 )
-from underdog.helptopics import help
+from underdog.infotopics import info
 from underdog.intraday import (
     IntraDay,
     intraday

@@ -35,7 +35,7 @@ class Day(TDAHistoric):
         end: Optional[datetime.datetime] = None
     ) -> Optional[pd.DataFrame]:
 
-        def build_dataframe(rows, symbol):
+        def build_dataframe(rows):
             if not rows:
                 return None
             df = pd.DataFrame(rows)
@@ -74,7 +74,7 @@ class Day(TDAHistoric):
                 end_datetime = end_date
             )
             assert result.status_code == 200, result.raise_for_status()
-            df = build_dataframe(result.json()['candles'], self.symbol)
+            df = build_dataframe(result.json()['candles'])
             if df is not None:
                 if self._dataframe is not None:
                     df = pd.concat(
