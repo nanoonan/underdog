@@ -48,6 +48,9 @@ Returns list of news items about the specified ticker.
 """),
 ('quote(symbol)', """
 Returns current quote for ticker.
+"""),
+('option_chain(symbol)', """
+Returns current option chain for ticker. This is current, not historic, data.
 """)
 ]
 
