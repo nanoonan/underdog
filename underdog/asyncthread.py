@@ -2,6 +2,7 @@ import asyncio
 import concurrent
 import enum
 import logging
+import selectors
 import threading
 import time
 
@@ -44,9 +45,7 @@ class AsyncThread(threading.Thread):
             if tasks:
                 await asyncio.wait(tasks)
         finally:
-            pass
-            # commented out because closing causes error in windows destructor
-            # self._loop.stop()
+            self._loop.stop()
 
     def run_task(
         self,
@@ -75,9 +74,11 @@ class AsyncThread(threading.Thread):
 
     def run(self) -> None:
         try:
-            self._loop = asyncio.new_event_loop()
+            selector = selectors.SelectSelector()
+            self._loop = asyncio.SelectorEventLoop(selector)
+            asyncio.set_event_loop(self._loop)
+            # self._loop = asyncio.new_event_loop()
             self._loop.run_forever()
         finally:
             self._loop.run_until_complete(self._loop.shutdown_asyncgens())
-            # commented out because closing causes error in windows destructor
-            # self._loop.close()
+            self._loop.close()

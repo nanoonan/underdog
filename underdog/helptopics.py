@@ -5,12 +5,6 @@ from typing import Optional
 
 import pandas as pd
 
-from IPython.display import (
-    display,
-    HTML,
-    Image,
-    Markdown
-)
 from tabulate import tabulate
 
 content = {}
@@ -19,17 +13,22 @@ content['classes'] = [
 ('Type', 'Description'),
 ('[Market, Day, IntraDay]', """
 The historic data classes implement a Dict-like interface to access historic stock data. Valid keys are dates, integers, or strings
-containing dates in 'YYYY-MM-DD' format. Slices are also supported. Assuming x is an instance, here are some examples: x['2020-01-01'],
-x['2020-01-01':'2021-01-01'], x[-252:] (returns last 252 trading days of data). Data is returned in a Panda table.
+containing dates in 'YYYY-MM-DD' format. Slices are also supported. Assuming x is an instance of Market, Day, or IntraDay, here are some examples: x['2020-01-01'],
+x['2020-01-01':'2021-01-01'], x[-252:] (returns last 252 trading days of data). Data is returned in a Panda dataframe.
 """),
 ('Market', """
-The Market class contains 2 years of daily data for all tickers traded.
+The Market class contains 2 years of daily data for all tickers traded. Market data comes from Polygon which limits
+API calls to five a minute. Two years of data takes over an hour to download. The Market class has a special update()
+method that updates the data when called. When data is less than five days out of date, the class automatically fetches the new data.
+However, when the data is more than five days out of date you need to manually invoke the update method.
 """),
 ('Day', """
 The Day class contains 20 years of daily data for a specific ticker.
 """),
 ('IntraDay', """
-The IntraDay class contains about two months of one-minute intraday data for a specific tickers. Includes pre and post market trades.
+The IntraDay class returns intraday data for a specific ticker. The data includes pre and post market trades. You can pass a period
+argument to the IntraDay constructor to specify either 1, 5, or 30 minute data. The number of days of data depends on the period.
+For example, 30 days of 1 minute data are available (90 days of 5 minute data and one year of 30 minute data).
 """)
 ]
 
@@ -47,6 +46,9 @@ Returns info about a ticker like market cap, institutional ownership ratio, etc.
 ('ticker_news(symbol)', """
 Returns list of news items about the specified ticker.
 """),
+('quote(symbol)', """
+Returns current quote for ticker.
+""")
 ]
 
 content['environment'] = [

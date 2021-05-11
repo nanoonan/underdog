@@ -11,17 +11,26 @@ import pandas as pd
 import underdog.constants as constants
 
 from underdog.datautil import twap
+from underdog.schema import Timespan
 from underdog.tdaclient import tda
 from underdog.tdahistoric import TDAHistoric
-from underdog.utility import get_trading_segment
+from underdog.utility import (
+    get_trading_segment,
+    timestamp_to_timeslot
+)
 
 logger = logging.getLogger(__name__)
 
-def build_dataframe(rows: List[Dict[str, Any]]) -> Optional[pd.DataFrame]:
+def build_dataframe(
+    rows: List[Dict[str, Any]],
+    symbol: str,
+    period: int = 1
+) -> Optional[pd.DataFrame]:
     if not rows:
         return None
 
     df = pd.DataFrame(rows)
+
     df = df.rename(
         columns = {
             'datetime':'timestamp',
@@ -40,8 +49,11 @@ def build_dataframe(rows: List[Dict[str, Any]]) -> Optional[pd.DataFrame]:
     df['trading_segment'] = df['timestamp'].apply(
         lambda x: get_trading_segment(x).value
     )
+    df['timeslot'] = df['timestamp'].apply(
+        lambda x: timestamp_to_timeslot(x, period = period)
+    )
     df = twap(df)
-    df.attrs['type'] = 'intraday'
+
     return df.sort_values('timestamp', ascending = True).reset_index(drop = True)
 
 def intraday(symbol: str) -> pd.DataFrame:
@@ -56,19 +68,23 @@ def intraday(symbol: str) -> pd.DataFrame:
             need_extended_hours_data = True
         )
         assert result.status_code == 200, result.raise_for_status()
-        return build_dataframe(result.json()['candles'])
+        return build_dataframe(result.json()['candles'], symbol)
     except Exception as exc:
         logger.error(str(exc))
         return None
-
 
 class IntraDay(TDAHistoric):
 
     def __init__(
         self,
-        symbol: str
+        symbol: str,
+        period: int = 1
     ):
-        super().__init__(symbol, constants.INTRADAY_PATH, 'timestamp')
+        assert period == 1 or period == 5 or period == 30
+        super().__init__(
+            symbol, '{0}/{1}'.format(constants.INTRADAY_PATH, period), 'timestamp',
+            Timespan.Minute, period
+        )
 
     def _fetch(
         self,
@@ -78,20 +94,26 @@ class IntraDay(TDAHistoric):
         try:
             if start is None:
                 start = datetime.datetime.combine(datetime.datetime.today() - \
-                datetime.timedelta(days = 90), datetime.time())
+                datetime.timedelta(days = 365), datetime.time())
             if end is None:
                 end = datetime.datetime.combine(datetime.datetime.today(), datetime.time())
+            if self._period == 1:
+                frequency = tda.api.PriceHistory.Frequency.EVERY_MINUTE
+            elif self._period == 5:
+                frequency = tda.api.PriceHistory.Frequency.EVERY_FIVE_MINUTES
+            else:
+                frequency = tda.api.PriceHistory.Frequency.EVERY_THIRTY_MINUTES
             result = tda.api.get_price_history(
                 self._symbol,
                 period_type = tda.api.PriceHistory.PeriodType.DAY,
                 frequency_type = tda.api.PriceHistory.FrequencyType.MINUTE,
-                frequency = tda.api.PriceHistory.Frequency.EVERY_MINUTE,
+                frequency = frequency,
                 start_datetime = start,
                 end_datetime = end,
                 need_extended_hours_data = True
             )
             assert result.status_code == 200, result.raise_for_status()
-            return build_dataframe(result.json()['candles'])
+            return build_dataframe(result.json()['candles'], self.symbol, self.period)
         except Exception as exc:
             logger.error(str(exc))
             return None

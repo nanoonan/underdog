@@ -11,6 +11,7 @@ import pandas as pd
 import underdog.constants as constants
 
 from underdog.datautil import twap
+from underdog.schema import Timespan
 from underdog.tdaclient import tda
 from underdog.tdahistoric import TDAHistoric
 from underdog.utility import nth_next_trading_date
@@ -23,7 +24,10 @@ class Day(TDAHistoric):
         self,
         symbol: str
     ):
-        super().__init__(symbol, constants.DAY_PATH, 'date')
+        super().__init__(
+            symbol, constants.DAY_PATH, 'date',
+            Timespan.Day, 1
+        )
 
     def _fetch(
         self,
@@ -31,7 +35,7 @@ class Day(TDAHistoric):
         end: Optional[datetime.datetime] = None
     ) -> Optional[pd.DataFrame]:
 
-        def build_dataframe(rows):
+        def build_dataframe(rows, symbol):
             if not rows:
                 return None
             df = pd.DataFrame(rows)
@@ -51,7 +55,6 @@ class Day(TDAHistoric):
                  lambda x: pd.Timestamp(pd.Timestamp(x, unit = 'ms').date())
             )
             df = twap(df)
-            df.attrs['type'] = 'day'
             return df.sort_values('date', ascending = True).reset_index(drop = True)
 
         start_date = datetime.datetime.combine(
@@ -71,7 +74,7 @@ class Day(TDAHistoric):
                 end_datetime = end_date
             )
             assert result.status_code == 200, result.raise_for_status()
-            df = build_dataframe(result.json()['candles'])
+            df = build_dataframe(result.json()['candles'], self.symbol)
             if df is not None:
                 if self._dataframe is not None:
                     df = pd.concat(

@@ -9,14 +9,14 @@ from underdog import help
 
 **Requires**: Python 3.8+
 
-The *underdog* package provides Python classes and functions to easily access free equity-related data through Panda dataframes. Data is cached on disk to improve performance and limit API requests to the data providers (which often rate limit the APIs). Currently, data is pulled from [Polygon](www.polygon.io), [finViz](https://finviz.com), and TD Ameritrade. 
+The *underdog* package provides Python classes and functions to easily access free equity-related data through Panda dataframes. Data is cached on disk to improve performance and limit API requests to the data providers (which often rate limit the APIs). Currently, data is pulled from [Polygon](https://polygon.io), [finViz](https://finviz.com), and TD Ameritrade.
 
 Feel free to send questions, comments or feedback to: nanoonan at marvinsmind dot com.
 
 
 ## Installation
 
-1. Install [parkit](https://github.com/nanoonan/parkit), which provides the storage layer. Make sure the _parkit_ directory is included in your PYTHONPATH.
+1. Install [parkit](https://github.com/nanoonan/parkit), which provides the storage layer.
 
 2. Install _underdog_ by opening a command prompt, navigating to the top-level directory of the git installation, and running the following command.
 
@@ -46,7 +46,7 @@ help('environment')
     ├────────────────────────┼───────────────────────────────────────────────┤
     │ TDA_ACCOUNT_ID         │ Account id for your TDA trading account.      │
     ╘════════════════════════╧═══════════════════════════════════════════════╛
-    
+
 
 ## API
 
@@ -56,35 +56,44 @@ help()
 ```
 
     help(topic: str) -> useful information
-    Valid help topics: introduction, installation, classes, functions
-    
+    Valid help topics: environment, classes, functions
+
 
 
 ```python
+# The main classes for accessing historic data
 help('classes')
 ```
 
-    ╒═════════════════════════╤═══════════════════════════════════════════════════════════════════════╕
-    │ Type                    │ Description                                                           │
-    ╞═════════════════════════╪═══════════════════════════════════════════════════════════════════════╡
-    │ [Market, Day, IntraDay] │ The historic data classes implement a Dict-like interface to access   │
-    │                         │ historic stock data. Valid keys are dates, integers, or strings       │
-    │                         │ containing dates in 'YYYY-MM-DD' format. Slices are also supported.   │
-    │                         │ Assuming x is an instance, here are some examples: x['2020-01-01'],   │
-    │                         │ x['2020-01-01':'2021-01-01'], x[-252:] (returns last 252 trading days │
-    │                         │ of data). Data is returned in a Panda table.                          │
-    ├─────────────────────────┼───────────────────────────────────────────────────────────────────────┤
-    │ Market                  │ The Market class contains 2 years of daily data for all tickers       │
-    │                         │ traded.                                                               │
-    ├─────────────────────────┼───────────────────────────────────────────────────────────────────────┤
-    │ Day                     │ The Day class contains 20 years of daily data for a specific ticker.  │
-    ├─────────────────────────┼───────────────────────────────────────────────────────────────────────┤
-    │ IntraDay                │ The IntraDay class contains about two months of one-minute intraday   │
-    │                         │ data for a specific tickers. Includes pre and post market trades. The │
-    │                         │ IntraDay class contains about two months of one-minute intraday data  │
-    │                         │ for a specific tickers. Includes pre and post market trades.          │
-    ╘═════════════════════════╧═══════════════════════════════════════════════════════════════════════╛
-    
+    ╒═════════════════════════╤════════════════════════════════════════════════════════════════════════╕
+    │ Type                    │ Description                                                            │
+    ╞═════════════════════════╪════════════════════════════════════════════════════════════════════════╡
+    │ [Market, Day, IntraDay] │ The historic data classes implement a Dict-like interface to access    │
+    │                         │ historic stock data. Valid keys are dates, integers, or strings        │
+    │                         │ containing dates in 'YYYY-MM-DD' format. Slices are also supported.    │
+    │                         │ Assuming x is an instance of Market, Day, or IntraDay, here are some   │
+    │                         │ examples: x['2020-01-01'], x['2020-01-01':'2021-01-01'], x[-252:]      │
+    │                         │ (returns last 252 trading days of data). Data is returned in a Panda   │
+    │                         │ dataframe.                                                             │
+    ├─────────────────────────┼────────────────────────────────────────────────────────────────────────┤
+    │ Market                  │ The Market class contains 2 years of daily data for all tickers        │
+    │                         │ traded. Market data comes from Polygon which limits API calls to five  │
+    │                         │ a minute. Two years of data takes over an hour to download. The Market │
+    │                         │ class has a special update() method that updates the data when called. │
+    │                         │ When data is less than five days out of date, the class automatically  │
+    │                         │ fetches the new data. However, when the data is more than five days    │
+    │                         │ out of date you need to manually invoke the update method.             │
+    ├─────────────────────────┼────────────────────────────────────────────────────────────────────────┤
+    │ Day                     │ The Day class contains 20 years of daily data for a specific ticker.   │
+    ├─────────────────────────┼────────────────────────────────────────────────────────────────────────┤
+    │ IntraDay                │ The IntraDay class returns intraday data for a specific ticker. The    │
+    │                         │ data includes pre and post market trades. You can pass a period        │
+    │                         │ argument to the IntraDay constructor to specify either 1, 5, or 30     │
+    │                         │ minute data. The number of days of data depends on the period. For     │
+    │                         │ example, 30 days of 1 minute data are available (90 days of 5 minute   │
+    │                         │ data and one year of 30 minute data).                                  │
+    ╘═════════════════════════╧════════════════════════════════════════════════════════════════════════╛
+
 
 
 ```python
@@ -103,35 +112,38 @@ help('functions')
     │                         │ ratio, etc...                                                         │
     ├─────────────────────────┼───────────────────────────────────────────────────────────────────────┤
     │ ticker_news(symbol)     │ Returns list of news items about the specified ticker.                │
+    ├─────────────────────────┼───────────────────────────────────────────────────────────────────────┤
+    │ quote(symbol)           │ Returns current quote for ticker.                                     │
     ╘═════════════════════════╧═══════════════════════════════════════════════════════════════════════╛
-    
+
 
 ## Examples
 
 
 ```python
 from underdog import Market
-df = Market()[:]
-df
+market = Market()
+# Invoke this once to download 2 years of data...will take over an hour
+market.update()
+```
+
+
+
+
+    True
+
+
+
+
+```python
+# Get a dataframe of last two years of daily data for all tickers
+market[:]
 ```
 
 
 
 
 <div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -158,7 +170,7 @@ df
       <td>77.4600</td>
       <td>76.3000</td>
       <td>2019-04-26</td>
-      <td>76.868060</td>
+      <td>76.86806</td>
     </tr>
     <tr>
       <th>1</th>
@@ -221,68 +233,68 @@ df
       <td>...</td>
     </tr>
     <tr>
-      <th>4521651</th>
-      <td>ARCM</td>
-      <td>200</td>
-      <td>100.0298</td>
-      <td>100.0300</td>
-      <td>100.0300</td>
-      <td>100.0300</td>
-      <td>100.0300</td>
-      <td>2021-05-07</td>
-      <td>100.030000</td>
+      <th>4531971</th>
+      <td>HOLD</td>
+      <td>175</td>
+      <td>98.7631</td>
+      <td>98.7450</td>
+      <td>98.7450</td>
+      <td>98.7450</td>
+      <td>98.7450</td>
+      <td>2021-05-10</td>
+      <td>HOLD</td>
     </tr>
     <tr>
-      <th>4521652</th>
-      <td>ESGN</td>
-      <td>728</td>
-      <td>28.6764</td>
-      <td>28.6150</td>
-      <td>28.6150</td>
-      <td>28.6150</td>
-      <td>28.6150</td>
-      <td>2021-05-07</td>
-      <td>28.615000</td>
+      <th>4531972</th>
+      <td>HLGE</td>
+      <td>13</td>
+      <td>26.3054</td>
+      <td>25.9974</td>
+      <td>25.9974</td>
+      <td>25.9974</td>
+      <td>25.9974</td>
+      <td>2021-05-10</td>
+      <td>HLGE</td>
     </tr>
     <tr>
-      <th>4521653</th>
-      <td>EAOK</td>
-      <td>363</td>
-      <td>27.5315</td>
-      <td>27.5347</td>
-      <td>27.5347</td>
-      <td>27.5347</td>
-      <td>27.5347</td>
-      <td>2021-05-07</td>
-      <td>27.534700</td>
+      <th>4531973</th>
+      <td>HEWC</td>
+      <td>4</td>
+      <td>30.8423</td>
+      <td>30.6740</td>
+      <td>30.6740</td>
+      <td>30.6740</td>
+      <td>30.6740</td>
+      <td>2021-05-10</td>
+      <td>HEWC</td>
     </tr>
     <tr>
-      <th>4521654</th>
-      <td>EAOM</td>
-      <td>100</td>
-      <td>28.5166</td>
-      <td>28.6215</td>
-      <td>28.6215</td>
-      <td>28.6215</td>
-      <td>28.6215</td>
-      <td>2021-05-07</td>
-      <td>28.621500</td>
+      <th>4531974</th>
+      <td>IBCE</td>
+      <td>125</td>
+      <td>24.8644</td>
+      <td>24.8450</td>
+      <td>24.8450</td>
+      <td>24.8450</td>
+      <td>24.8450</td>
+      <td>2021-05-10</td>
+      <td>IBCE</td>
     </tr>
     <tr>
-      <th>4521655</th>
-      <td>DYHG</td>
-      <td>18</td>
-      <td>56.9200</td>
-      <td>57.0110</td>
-      <td>57.0110</td>
-      <td>57.0110</td>
-      <td>57.0110</td>
-      <td>2021-05-07</td>
-      <td>57.011000</td>
+      <th>4531975</th>
+      <td>JHCS</td>
+      <td>40</td>
+      <td>38.5053</td>
+      <td>38.2801</td>
+      <td>38.2801</td>
+      <td>38.2801</td>
+      <td>38.2801</td>
+      <td>2021-05-10</td>
+      <td>JHCS</td>
     </tr>
   </tbody>
 </table>
-<p>4521656 rows × 9 columns</p>
+<p>4531976 rows × 9 columns</p>
 </div>
 
 
@@ -290,6 +302,7 @@ df
 
 ```python
 from underdog import ticker_details
+# Get useful information about a ticker
 ticker_details('TSLA')
 ```
 
@@ -322,19 +335,6 @@ df[df['trading_segment'] == 2]
 
 
 <div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -476,19 +476,6 @@ intraday('TSLA')
 
 
 <div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">

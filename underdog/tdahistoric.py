@@ -10,6 +10,7 @@ import pandas as pd
 
 from underdog.dataframedict import DataFrameDict
 from underdog.datautil import datestr_from_key
+from underdog.schema import Timespan
 from underdog.utility import (
     date_from_datestr,
     nth_previous_trading_date
@@ -23,12 +24,16 @@ class TDAHistoric():
         self,
         symbol: str,
         path: str,
-        datefield: str
+        datefield: str,
+        timespan: Timespan,
+        period: int
     ):
         self._symbol = symbol
         self._datefield = datefield
         self._dataframe = None
         self._dates = None
+        self._timespan = timespan
+        self._period = period
         self._datadict = DataFrameDict(path)
         if self._symbol in self._datadict:
             df = self._datadict[self._symbol]
@@ -38,6 +43,14 @@ class TDAHistoric():
                     Optional[List[Union[str, datetime.date]]],
                     sorted(list((self._dataframe[self._datefield].dt.date).unique()))
                 )
+
+    @property
+    def timespan(self) -> Timespan:
+        return self._timespan
+
+    @property
+    def period(self) -> int:
+        return self._period
 
     @property
     def symbol(self) -> str:

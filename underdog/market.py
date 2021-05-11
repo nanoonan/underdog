@@ -227,5 +227,4 @@ def _build_dataframe(
         'vwap': float
     })
     df['twap'] = twap(df)
-    df.attrs['type'] = 'market'
     return df.reset_index(drop = True)
