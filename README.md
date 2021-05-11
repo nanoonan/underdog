@@ -9,14 +9,14 @@ from underdog import info
 
 **Requires**: Python 3.8+
 
-The *underdog* package provides Python classes and functions to easily access free equity-related data through Panda dataframes. Data is cached on disk to improve performance and limit API requests to the data providers (which often rate limit the APIs). Currently, data is pulled from [Polygon](https://polygon.io), [finViz](https://finviz.com), and TD Ameritrade. 
+The *underdog* package provides Python classes and functions to easily access free equity-related data through Panda dataframes. Data is cached on disk to improve performance and limit API requests to the data providers (which often rate limit the APIs). Currently, data is pulled from [Polygon](https://polygon.io), [finViz](https://finviz.com), and TD Ameritrade.
 
 Feel free to send questions, comments or feedback to: nanoonan at marvinsmind dot com.
 
 
 ## Installation
 
-1. Install [parkit](https://github.com/nanoonan/parkit), which provides the storage layer. 
+1. Install [parkit](https://github.com/nanoonan/parkit), which provides the storage layer.
 
 2. Install _underdog_ by opening a command prompt, navigating to the top-level directory of the git installation, and running the following command.
 
@@ -46,7 +46,7 @@ info('environment')
     ├────────────────────────┼───────────────────────────────────────────────┤
     │ TDA_ACCOUNT_ID         │ Account id for your TDA trading account.      │
     ╘════════════════════════╧═══════════════════════════════════════════════╛
-    
+
 
 ## API
 
@@ -57,7 +57,7 @@ info()
 
     info(topic: str) -> useful information
     Valid info topics: environment, classes, functions
-    
+
 
 
 ```python
@@ -93,7 +93,7 @@ info('classes')
     │                         │ example, 30 days of 1 minute data are available (90 days of 5 minute   │
     │                         │ data and one year of 30 minute data).                                  │
     ╘═════════════════════════╧════════════════════════════════════════════════════════════════════════╛
-    
+
 
 
 ```python
@@ -118,7 +118,7 @@ info('functions')
     │ option_chain(symbol)    │ Returns current option chain for ticker. This is current, not         │
     │                         │ historic, data.                                                       │
     ╘═════════════════════════╧═══════════════════════════════════════════════════════════════════════╛
-    
+
 
 ## Examples
 
@@ -147,19 +147,6 @@ market[:]
 
 
 <div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -351,19 +338,6 @@ df[df['trading_segment'] == 2]
 
 
 <div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -531,19 +505,6 @@ df
 
 
 <div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -672,5 +633,3 @@ df
 </table>
 <p>5032 rows × 7 columns</p>
 </div>
-
-
