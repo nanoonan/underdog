@@ -1,6 +1,11 @@
 ```python
 from underdog import info
+info()
 ```
+
+    info(topic: str) -> useful information
+    Valid info topics: environment, classes, functions
+
 
 ## Overview
 **Status**: Development
@@ -52,15 +57,6 @@ info('environment')
 
 
 ```python
-info()
-```
-
-    info(topic: str) -> useful information
-    Valid info topics: environment, classes, functions
-
-
-
-```python
 # The main classes for accessing historic data
 info('classes')
 ```
@@ -100,24 +96,37 @@ info('classes')
 info('functions')
 ```
 
-    ╒═════════════════════════╤═══════════════════════════════════════════════════════════════════════╕
-    │ Function                │ Description                                                           │
-    ╞═════════════════════════╪═══════════════════════════════════════════════════════════════════════╡
-    │ intraday(symbol)        │ Returns current intraday one-minute data for the specified ticker.    │
-    ├─────────────────────────┼───────────────────────────────────────────────────────────────────────┤
-    │ tickers(update = False) │ Returns table of all tickers. Set update to True when calling for the │
-    │                         │ first time or to download the latest data.                            │
-    ├─────────────────────────┼───────────────────────────────────────────────────────────────────────┤
-    │ ticker_details(symbol)  │ Returns info about a ticker like market cap, institutional ownership  │
-    │                         │ ratio, etc...                                                         │
-    ├─────────────────────────┼───────────────────────────────────────────────────────────────────────┤
-    │ ticker_news(symbol)     │ Returns list of news items about the specified ticker.                │
-    ├─────────────────────────┼───────────────────────────────────────────────────────────────────────┤
-    │ quote(symbol)           │ Returns current quote for ticker.                                     │
-    ├─────────────────────────┼───────────────────────────────────────────────────────────────────────┤
-    │ option_chain(symbol)    │ Returns current option chain for ticker. This is current, not         │
-    │                         │ historic, data.                                                       │
-    ╘═════════════════════════╧═══════════════════════════════════════════════════════════════════════╛
+    ╒══════════════════════════════════════╤═══════════════════════════════════════════════════════════════════════╕
+    │ Function                             │ Description                                                           │
+    ╞══════════════════════════════════════╪═══════════════════════════════════════════════════════════════════════╡
+    │ intraday(symbol)                     │ Returns current intraday one-minute data for the specified ticker.    │
+    ├──────────────────────────────────────┼───────────────────────────────────────────────────────────────────────┤
+    │ tickers(update = False)              │ Returns table of all tickers. Set update to True when calling for the │
+    │                                      │ first time or to download the latest data.                            │
+    ├──────────────────────────────────────┼───────────────────────────────────────────────────────────────────────┤
+    │ ticker_details(symbol)               │ Returns info about a ticker like market cap, institutional ownership  │
+    │                                      │ ratio, etc...                                                         │
+    ├──────────────────────────────────────┼───────────────────────────────────────────────────────────────────────┤
+    │ ticker_news(symbol)                  │ Returns list of news items about the specified ticker.                │
+    ├──────────────────────────────────────┼───────────────────────────────────────────────────────────────────────┤
+    │ quote(symbol)                        │ Returns current quote for ticker.                                     │
+    ├──────────────────────────────────────┼───────────────────────────────────────────────────────────────────────┤
+    │ option_chain(symbol)                 │ Returns current option chain for ticker. This is current, not         │
+    │                                      │ historic, data.                                                       │
+    ├──────────────────────────────────────┼───────────────────────────────────────────────────────────────────────┤
+    │ trading_daterange(start, end)        │ Iterator that produces trading dates between specified start and end  │
+    │                                      │ dates.                                                                │
+    ├──────────────────────────────────────┼───────────────────────────────────────────────────────────────────────┤
+    │ nth_previous_trading_date(n, anchor) │ Nth prior trading date from anchor.                                   │
+    ├──────────────────────────────────────┼───────────────────────────────────────────────────────────────────────┤
+    │ nth_next_trading_date(n, anchor)     │ Nth future trading date from anchor.                                  │
+    ├──────────────────────────────────────┼───────────────────────────────────────────────────────────────────────┤
+    │ trading_days_between(start, end)     │ Number of trading days between start and end.                         │
+    ├──────────────────────────────────────┼───────────────────────────────────────────────────────────────────────┤
+    │ is_trading_date(when)                │ Is specified date a trading day?                                      │
+    ├──────────────────────────────────────┼───────────────────────────────────────────────────────────────────────┤
+    │ market_open()                        │ Is the market currently open?                                         │
+    ╘══════════════════════════════════════╧═══════════════════════════════════════════════════════════════════════╛
 
 
 ## Examples
