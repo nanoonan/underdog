@@ -314,7 +314,7 @@ ticker_details('TSLA')
 
 
 
-    {'market_cap': 568110000000,
+    {'market_cap': 555680000000,
      'shares_float': 774230000,
      'shares_outstanding': 963330000,
      'insider_ownership': 0.0,
@@ -350,8 +350,8 @@ df[df['trading_segment'] == 2]
       <th>low</th>
       <th>high</th>
       <th>volume</th>
-      <th>trading_segment</th>
       <th>twap</th>
+      <th>trading_segment</th>
       <th>timeslot</th>
     </tr>
   </thead>
@@ -364,8 +364,8 @@ df[df['trading_segment'] == 2]
       <td>659.0100</td>
       <td>665.0500</td>
       <td>416090</td>
-      <td>2</td>
       <td>661.934012</td>
+      <td>2</td>
       <td>110</td>
     </tr>
     <tr>
@@ -376,8 +376,8 @@ df[df['trading_segment'] == 2]
       <td>658.0000</td>
       <td>661.3300</td>
       <td>215961</td>
-      <td>2</td>
       <td>659.731306</td>
+      <td>2</td>
       <td>111</td>
     </tr>
     <tr>
@@ -388,8 +388,8 @@ df[df['trading_segment'] == 2]
       <td>655.3400</td>
       <td>658.4299</td>
       <td>253527</td>
-      <td>2</td>
       <td>656.850914</td>
+      <td>2</td>
       <td>112</td>
     </tr>
     <tr>
@@ -400,8 +400,8 @@ df[df['trading_segment'] == 2]
       <td>653.4100</td>
       <td>656.8100</td>
       <td>287776</td>
-      <td>2</td>
       <td>655.077686</td>
+      <td>2</td>
       <td>113</td>
     </tr>
     <tr>
@@ -412,8 +412,8 @@ df[df['trading_segment'] == 2]
       <td>653.1200</td>
       <td>656.8400</td>
       <td>316319</td>
-      <td>2</td>
       <td>654.968006</td>
+      <td>2</td>
       <td>114</td>
     </tr>
     <tr>
@@ -436,8 +436,8 @@ df[df['trading_segment'] == 2]
       <td>587.8400</td>
       <td>590.3400</td>
       <td>227810</td>
-      <td>2</td>
       <td>589.114091</td>
+      <td>2</td>
       <td>235</td>
     </tr>
     <tr>
@@ -448,8 +448,8 @@ df[df['trading_segment'] == 2]
       <td>588.7513</td>
       <td>589.9599</td>
       <td>145852</td>
-      <td>2</td>
       <td>589.354121</td>
+      <td>2</td>
       <td>236</td>
     </tr>
     <tr>
@@ -460,8 +460,8 @@ df[df['trading_segment'] == 2]
       <td>589.5000</td>
       <td>591.1700</td>
       <td>260416</td>
-      <td>2</td>
       <td>590.329323</td>
+      <td>2</td>
       <td>237</td>
     </tr>
     <tr>
@@ -472,8 +472,8 @@ df[df['trading_segment'] == 2]
       <td>590.0000</td>
       <td>590.9500</td>
       <td>228326</td>
-      <td>2</td>
       <td>590.485509</td>
+      <td>2</td>
       <td>238</td>
     </tr>
     <tr>
@@ -484,8 +484,8 @@ df[df['trading_segment'] == 2]
       <td>589.5000</td>
       <td>590.9600</td>
       <td>328648</td>
-      <td>2</td>
       <td>590.233636</td>
+      <td>2</td>
       <td>239</td>
     </tr>
   </tbody>
@@ -637,6 +637,63 @@ df
 </div>
 
 
+
+## Stream Support (Experimental)
+
+
+```python
+from underdog import (
+    StreamReader,
+    StreamType,
+    StreamWriter
+)
+```
+
+
+```python
+# Define a stream reader to handle each stream event. A reader
+# runs as a background thread once started. Note: the reader
+# does not need to run in the same process as the writer.
+# Multiple readers can read the same stream.
+class MyReader(StreamReader):
+
+    def on_event(self, event):
+        print(event)
+
+reader = MyReader('stockstream')
+reader.start()
+```
+
+
+```python
+# Start a stream writer for a set of symbols. In this example
+# the stream will include both chart and level 1 quote events
+# for the symbols. The stream writer writes to a persistent
+# log identified by the name passed to the constructor. One or
+# more stream readers can read the events from multiple processes.
+symbols = ['TSLA', 'NIO']
+writer = StreamWriter(
+    'stockstream', {
+        StreamType.Chart: symbols,
+        StreamType.Quote: symbols
+    }
+)
+writer.start()
+```
+
+    (2, 1621287113617, 'TSLA', 1621287000000, 573.38, 573.4, 573.49, 573.27, 697)
+    (2, 1621287113617, 'NIO', 1621287000000, 33.73, 33.72, 33.73, 33.72, 2701)
+    (1, 1621287118654, 'TSLA', 1621287095495, 573.1, 573.29, 1621287117722, 573.1, None)
+    (1, 1621287118654, 'NIO', 1621287114614, 33.72, 33.73, 1621287114614, 33.73, 1)
+    (1, 1621287123693, 'TSLA', 1621287121682, 573, None, 1621287121681, None, None)
+    (1, 1621287123693, 'NIO', 1621287120388, None, None, None, None, None)
+
+
+
+```python
+# Stop the writer thread.
+writer.stop()
+```
 
 
 ```python
