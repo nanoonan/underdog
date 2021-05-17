@@ -135,8 +135,7 @@ class IntraDay(TDAHistoric):
                     close = 'last',
                     low = 'min',
                     high = 'max',
-                    volume = 'sum',
-                    trading_segment = 'first'
+                    volume = 'sum'
                 )).dropna().reset_index(drop = False)
                 self._dataframe = twap(self._dataframe)
                 self._dataframe['trading_segment'] = self._dataframe['timestamp'] \
