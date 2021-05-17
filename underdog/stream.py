@@ -3,10 +3,8 @@ import logging
 import threading
 
 from typing import (
-    Any, List
+    Any, Dict, List
 )
-
-import pandas as pd
 
 from parkit import (
     getenv,
@@ -26,8 +24,8 @@ from underdog.tdaclient import tda
 logger = logging.getLogger(__name__)
 
 class StreamType(enum.Enum):
-    Quote = 1
-    Chart = 2
+    Quote: int = 1
+    Chart: int = 2
 
 class StreamReader(threading.Thread):
 
@@ -40,7 +38,7 @@ class StreamReader(threading.Thread):
         self._log = Log(constants.STREAM_PATH + '/' + name)
         self._start = start
 
-    def on_event(self, event) -> bool:
+    def on_event(self, event: Any) -> bool:
         return True
 
     def run(self):
@@ -58,7 +56,7 @@ class StreamReader(threading.Thread):
                 for obj in cache:
                     if obj is None:
                         return
-                    elif self.on_event(obj) == True:
+                    if self.on_event(obj):
                         return
         except Exception as exc:
             logger.error(str(exc))
@@ -68,7 +66,7 @@ class StreamWriter(AsyncThread):
     def __init__(
         self,
         name: str,
-        config,
+        config: Dict[StreamType, List[str]],
         realtime: bool = False
     ):
         super().__init__()
@@ -80,10 +78,10 @@ class StreamWriter(AsyncThread):
         self._realtime = realtime
 
     @property
-    def log(self):
+    def log(self) -> Log:
         return self._log
 
-    def _log_chart_writer(self, message):
+    def _log_chart_writer(self, message: Dict[str, Any]) -> None:
         try:
             if message and 'content' in message:
                 timestamp = message['timestamp'] if 'timestamp' in message else None
@@ -105,7 +103,7 @@ class StreamWriter(AsyncThread):
         except Exception as exc:
             logger.error(str(exc))
 
-    def _log_quote_writer(self, message):
+    def _log_quote_writer(self, message: Dict[str, Any]) -> None:
         try:
             if message and 'content' in message:
                 timestamp = message['timestamp'] if 'timestamp' in message else None
@@ -128,9 +126,9 @@ class StreamWriter(AsyncThread):
                             )
                         )
         except Exception as exc:
-            logger.error('error')
+            logger.error(str(exc))
 
-    async def _start(self):
+    async def _start(self) -> None:
         await self._stream.login()
         if self._realtime:
             await self._stream.quality_of_service(StreamClient.QOSLevel.EXPRESS)
@@ -146,7 +144,7 @@ class StreamWriter(AsyncThread):
             else:
                 raise RuntimeError()
 
-    async def _handle_messages(self):
+    async def _handle_messages(self) -> None:
         while True:
             await self._stream.handle_message()
 
@@ -161,7 +159,7 @@ class StreamWriter(AsyncThread):
 
     def add(
         self,
-        config
+        config: Dict[StreamType, List[str]]
     ) -> None:
         assert self.state == AsyncThreadState.Started
         for stream_type, symbols in config.items():
