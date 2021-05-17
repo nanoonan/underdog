@@ -28,8 +28,7 @@ The Day class contains 20 years of daily data for a specific ticker.
 """),
 ('IntraDay(symbol, period)', """
 The IntraDay class contains intraday data for a specific ticker. The data includes pre and post market trades. You can pass a period
-argument to the IntraDay constructor to specify either 1, 5, or 30 minute data. The number of days of data depends on the period.
-For example, 30 days of 1 minute data are available (90 days of 5 minute data and one year of 30 minute data).
+argument to the IntraDay constructor. Data will be resampled to match the request period in minutes. The default period is one minute.
 """)
 ]
 

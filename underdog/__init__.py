@@ -17,6 +17,10 @@ from underdog.schema import (
     Timespan,
     TradingSegment
 )
+from underdog.stream import (
+    StreamType,
+    StreamWriter
+)
 from underdog.tickers import tickers
 from underdog.utility import (
     date_from_datestr,

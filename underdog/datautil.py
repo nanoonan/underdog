@@ -9,27 +9,27 @@ import numpy as np
 import pandas as pd
 
 from underdog.utility import (
-    datestr_from_date,
+    date_from_datestr,
     nth_next_trading_date,
     nth_previous_trading_date
 )
 
 logger = logging.getLogger(__name__)
 
-def datestr_from_key(
+def date_from_key(
     key: Optional[Union[str, datetime.date, int]],
-    dates: Optional[List[Union[str, datetime.date]]]
-) -> Optional[str]:
+    dates: List[datetime.date]
+) -> Optional[datetime.date]:
     if key is None:
         return None
     if isinstance(key, datetime.date):
-        return datestr_from_date(key)
-    if isinstance(key, str):
         return key
+    if isinstance(key, str):
+        return date_from_datestr(key)
     if key >= 0 and dates:
-        return datestr_from_date(nth_next_trading_date(key, anchor = dates[0]))
+        return nth_next_trading_date(key, anchor = dates[0])
     if key < 0 and dates:
-        return datestr_from_date(nth_previous_trading_date(abs(key + 1), anchor = dates[-1]))
+        return nth_previous_trading_date(abs(key + 1), anchor = dates[-1])
     raise KeyError()
 
 def twap(df: pd.DataFrame) -> pd.DataFrame:
@@ -53,3 +53,20 @@ def twap(df: pd.DataFrame) -> pd.DataFrame:
         df['close'], df['twap']
     )
     return df
+
+def twap_(o, h, l, c):
+    oh = np.abs(o - h)
+    ol = np.abs(o - l)
+    hl = np.abs(h - l)
+    lc = np.abs(l - c)
+    hc = np.abs(h - c)
+    ohlc = oh + hl + lc
+    olhc = ol + hl + hc
+    ohmean = (o + h) / 2
+    olmean = (o + l) / 2
+    hlmean = (h + l) / 2
+    lcmean = (l + c) / 2
+    hcmean = (h + c) / 2
+    ohlctwap = (oh / ohlc) * ohmean + (hl / ohlc) * hlmean + (lc / ohlc) * lcmean
+    olhctwap = (ol / olhc) * olmean + (hl / olhc) * hlmean + (hc / olhc) * hcmean
+    return (ohlctwap + olhctwap) / 2

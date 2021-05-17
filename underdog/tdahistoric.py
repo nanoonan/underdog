@@ -1,18 +1,18 @@
-# pylint: disable = unused-argument, assignment-from-none, no-self-use
+# pylint: disable = unused-argument, assignment-from-none, no-self-use, too-many-instance-attributes
 import datetime
 import logging
 
 from typing import (
-    cast, Generator, Optional, List, Tuple, Union
+    Generator, Optional, List, Tuple, Union
 )
 
 import pandas as pd
 
 from underdog.dataframedict import DataFrameDict
-from underdog.datautil import datestr_from_key
+from underdog.datautil import date_from_key
 from underdog.schema import Timespan
 from underdog.utility import (
-    date_from_datestr,
+    nth_next_trading_date,
     nth_previous_trading_date
 )
 
@@ -26,23 +26,18 @@ class TDAHistoric():
         path: str,
         datefield: str,
         timespan: Timespan,
-        period: int
+        source_period: int,
+        sample_period: int
     ):
         self._symbol = symbol
         self._datefield = datefield
         self._dataframe = None
-        self._dates = None
+        self._dates: List[datetime.date] = []
         self._timespan = timespan
-        self._period = period
+        self._source_period = source_period
+        self._sample_period = sample_period
         self._datadict = DataFrameDict(path)
-        if self._symbol in self._datadict:
-            df = self._datadict[self._symbol]
-            self._dataframe = df
-            if df.iloc[-1][self._datefield].date() == nth_previous_trading_date(1):
-                self._dates = cast(
-                    Optional[List[Union[str, datetime.date]]],
-                    sorted(list((self._dataframe[self._datefield].dt.date).unique()))
-                )
+        self.update()
 
     @property
     def timespan(self) -> Timespan:
@@ -50,87 +45,112 @@ class TDAHistoric():
 
     @property
     def period(self) -> int:
-        return self._period
+        return self._sample_period
 
     @property
     def symbol(self) -> str:
         return self._symbol
 
     def __len__(self) -> int:
-        if self._load() and self._dates:
-            return len(self._dates)
-        return 0
+        return len(self._dates)
+
+    def clear(self) -> None:
+        if self._symbol in self._datadict:
+            del self._datadict[self._symbol]
+        self._dataframe = None
+        self._dates = []
 
     def keys(self) -> Generator[datetime.date, None, None]:
-        if self._load() and self._dates:
-            for date in self._dates:
-                yield cast(datetime.date, date)
+        for date in self._dates:
+            yield date
 
     def values(self) -> Generator[pd.DataFrame, None, None]:
-        df = self._get_dataframe()
-        if df:
-            for date in sorted(
-                {[timestamp.date() for timestamp in df[self._datefield].to_list()]}
-            ):
-                yield df[df[self._datefield].dt.date == date].copy().reset_index(drop = True)
+        if self._dataframe is not None:
+            for date in self._dates:
+                yield self._dataframe[self._dataframe[self._datefield].dt.date == date] \
+                .reset_index(drop = True)
 
     def __iter__(self) -> Generator[datetime.date, None, None]:
         return self.keys()
 
     def items(self) -> Generator[Tuple[datetime.date, pd.DataFrame], None, None]:
-        df = self._get_dataframe()
-        if df:
-            for date in sorted(
-                [timestamp.date() for timestamp in df[self._datefield].to_list()]
-            ):
-                yield date, df[df[self._datefield].dt.date == date].copy().reset_index(drop = True)
+        if self._dataframe is not None:
+            for date in self._dates:
+                yield (
+                    date,
+                    self._dataframe[self._dataframe[self._datefield].dt.date == date] \
+                    .reset_index(drop = True)
+                )
 
     def __getitem__(
         self,
         key: Union[str, datetime.date, int, slice]
     ) -> Optional[pd.DataFrame]:
         if not isinstance(key, slice):
-            return self._get_dataframe(key, key)
-        return self._get_dataframe(key.start, key.stop)
+            return self._make_dataframe(key, key)
+        return self._make_dataframe(key.start, key.stop)
 
-    def _get_dataframe(
+    def _make_dataframe(
         self,
-        start: Optional[Union[str, datetime.date, int]] = None,
-        end: Optional[Union[str, datetime.date, int]] = None
+        key_start: Optional[Union[str, datetime.date, int]] = None,
+        key_end: Optional[Union[str, datetime.date, int]] = None
     ) -> Optional[pd.DataFrame]:
-        if not self._load():
+        if not self._dates or self._dataframe is None:
             return None
-        start = datestr_from_key(start, self._dates)
-        end = datestr_from_key(end, self._dates)
+        start = date_from_key(key_start, self._dates)
+        end = date_from_key(key_end, self._dates)
         if start is None and end is None:
             return self._dataframe
         if start is None:
-            return self._dataframe[self._dataframe[self._datefield].dt.date <= \
-            date_from_datestr(cast(str, end))].reset_index(drop = True) \
-            if self._dataframe is not None else None
+            return self._dataframe[self._dataframe[self._datefield].dt.date <= end] \
+            .reset_index(drop = True)
         if end is None:
-            return self._dataframe[self._dataframe[self._datefield].dt.date >= \
-            date_from_datestr(start)].reset_index(drop = True) \
-            if self._dataframe is not None else None
+            return self._dataframe[self._dataframe[self._datefield].dt.date >= start] \
+            .reset_index(drop = True)
         return self._dataframe[
-            (self._dataframe[self._datefield].dt.date >= date_from_datestr(start)) &
-            (self._dataframe[self._datefield].dt.date <= date_from_datestr(end))
-        ].reset_index(drop = True) if self._dataframe is not None else None
+            (self._dataframe[self._datefield].dt.date >= start) &
+            (self._dataframe[self._datefield].dt.date <= end)
+        ].reset_index(drop = True)
 
-    def _load(self) -> bool:
-        if self._dates is None:
-            self._dataframe = self._fetch(
-                end = datetime.datetime.combine(nth_previous_trading_date(1), datetime.time())
+    def update(self) -> None:
+        if self._symbol in self._datadict:
+            self._dataframe = self._datadict[self._symbol]
+            if self._dataframe is not None:
+                self._dates = sorted(list((self._dataframe[self._datefield].dt.date).unique()))
+                if self._dates[-1] == nth_previous_trading_date(1):
+                    self._resample()
+                    return
+        if self._dataframe is None:
+            start = None
+        else:
+            start = nth_next_trading_date(
+                1,
+                anchor = self._dates[-1]
             )
-            if self._dataframe is None:
-                return False
+        df = self._fetch(
+            start = start,
+            end = nth_previous_trading_date(1)
+        )
+        if df is None:
+            if self._dataframe is not None:
+                self._resample()
+            return
+        if self._dataframe is not None:
+            self._dataframe = pd.concat([self._dataframe, df], ignore_index = True)
+        else:
+            self._dataframe = df
+        if self._dataframe is not None:
             self._datadict[self._symbol] = self._dataframe
             self._dates = sorted(list((self._dataframe[self._datefield].dt.date).unique()))
-        return True
+            self._resample()
+        return
+
+    def _resample(self):
+        pass
 
     def _fetch(
         self,
-        start: Optional[datetime.datetime] = None,
-        end: Optional[datetime.datetime] = None
+        start: Optional[datetime.date] = None,
+        end: Optional[datetime.date] = None
     ) -> Optional[pd.DataFrame]:
         return None

@@ -3,9 +3,8 @@ import datetime
 import json
 import logging
 
-from functools import lru_cache
 from typing import (
-    Any, cast, Dict, Generator, List, Optional, Tuple,
+    Any, Dict, Generator, List, Optional, Tuple,
     Union
 )
 
@@ -22,12 +21,10 @@ import underdog.constants as constants
 from underdog.asyncthread import AsyncThread
 from underdog.dataframedict import DataFrameDict
 from underdog.datautil import (
-    datestr_from_key,
+    date_from_key,
     twap
 )
 from underdog.utility import (
-    date_from_datestr,
-    datestr_from_date,
     nth_next_trading_date,
     nth_previous_trading_date,
     trading_daterange,
@@ -38,14 +35,10 @@ logger = logging.getLogger(__name__)
 
 class Market():
 
-    def __init__(self, cached: bool = True):
+    def __init__(self):
         self._api_key = getenv(constants.POLYGON_API_KEY_ENVNAME)
         self._datadict = DataFrameDict(constants.MARKET_PATH)
-        self._dates = cast(
-            Optional[List[Union[str, datetime.date]]],
-            sorted(list(self._datadict.keys()))
-        )
-        self._cached = cached
+        self._dates = sorted([pd.Timestamp(key).date() for key in self._datadict.keys()])
         self.update(True)
 
     def __len__(self):
@@ -53,7 +46,7 @@ class Market():
 
     def keys(self) -> Generator[datetime.date, None, None]:
         for key in self._datadict.keys():
-            yield pd.Timestamp(key).date()
+            yield key
 
     def values(self) -> Generator[pd.DataFrame, None, None]:
         return self._datadict.values()
@@ -62,8 +55,7 @@ class Market():
         return self.keys()
 
     def items(self) -> Generator[Tuple[datetime.date, pd.DataFrame], None, None]:
-        for key, value in self._datadict.items():
-            yield pd.Timestamp(key).date(), value
+        return self._datadict.items()
 
     def __getitem__(
         self,
@@ -71,41 +63,33 @@ class Market():
     ) -> Optional[pd.DataFrame]:
 
         if not isinstance(key, slice):
-            datestr = datestr_from_key(key, self._dates)
-            if self._dates and datestr in self._dates:
-                return self._get_cached_dataframe(datestr) \
-                if self._cached else self._datadict[datestr]
+            date = date_from_key(key, self._dates)
+            if self._dates and date in self._dates:
+                return self._datadict[str(date)]
             return None
 
-        start_date = datestr_from_key(key.start, self._dates)
-        end_date = datestr_from_key(key.stop, self._dates)
+        start = date_from_key(key.start, self._dates)
+        end = date_from_key(key.stop, self._dates)
 
-        return self._make_dataframe(start_date, end_date)
+        return self._make_dataframe(start, end)
 
     def _make_dataframe(
         self,
-        start_datestr: Optional[str] = None,
-        end_datestr: Optional[str] = None
+        start: Optional[datetime.date] = None,
+        end: Optional[datetime.date] = None
     ) -> Optional[pd.DataFrame]:
         if self._dates:
             dataframes = []
-            start_datestr = '0000' if start_datestr is None else start_datestr
-            end_datestr = '9999' if end_datestr is None else end_datestr
-            for datestr in self._dates[
-                bisect.bisect_left(self._dates, start_datestr): \
-                bisect.bisect_right(self._dates, end_datestr)
+            start = datetime.date(1900, 1, 1) if start is None else start
+            end = datetime.date(2100, 1, 1) if end is None else end
+            for date in self._dates[
+                bisect.bisect_left(self._dates, start): \
+                bisect.bisect_right(self._dates, end)
             ]:
-                dataframes.append(
-                    self._get_cached_dataframe(datestr) \
-                    if self._cached else self._datadict[datestr]
-                )
+                dataframes.append(self._datadict[str(date)])
             if dataframes:
-                return pd.concat(dataframes, ignore_index = True).reset_index(drop = True)
+                return pd.concat(dataframes, ignore_index = True)
         return None
-
-    @lru_cache
-    def _get_cached_dataframe(self, datestr: str):
-        return self._datadict[datestr]
 
     def update(
         self,
@@ -115,36 +99,33 @@ class Market():
         try:
             last_date = self._dates[-1] if self._dates else None
 
-            if last_date == datestr_from_date(nth_previous_trading_date(1)):
+            if last_date == nth_previous_trading_date(1):
                 return True
 
-            start_date = nth_previous_trading_date(503) if last_date is None else \
-            nth_next_trading_date(1, anchor = date_from_datestr(cast(str, last_date)))
+            start = nth_previous_trading_date(503) if last_date is None else \
+            nth_next_trading_date(1, anchor = last_date)
 
-            end_date = nth_previous_trading_date(1)
+            end = nth_previous_trading_date(1)
 
-            if quick_check and trading_days_between(start_date, end_date) > 5:
+            if quick_check and trading_days_between(start, end) > 5:
                 print('Market data is out of date. Please run update().')
                 return False
 
             thread = AsyncThread()
             thread.start()
-            thread.run_task(self._fetchall(start_date, end_date))
+            thread.run_task(self._fetchall(start, end))
         finally:
-            self._dates = cast(
-                Optional[List[Union[str, datetime.date]]],
-                sorted(list(self._datadict.keys()))
-            )
+            self._dates = sorted([pd.Timestamp(key).date() for key in self._datadict.keys()])
             if thread:
                 thread.stop()
         return True
 
     async def _fetchall(
         self,
-        start_date: datetime.date,
-        end_date: datetime.date
+        start: datetime.date,
+        end: datetime.date
     ):
-        args = list(trading_daterange(start_date, end_date))
+        args = list(trading_daterange(start, end))
         interval = 0 if len(args) <= 5 else 12
         async with aiohttp.ClientSession() as session:
             iteration = 0

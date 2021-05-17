@@ -79,10 +79,8 @@ info('classes')
     ├──────────────────────────┼────────────────────────────────────────────────────────────────────────┤
     │ IntraDay(symbol, period) │ The IntraDay class contains intraday data for a specific ticker. The   │
     │                          │ data includes pre and post market trades. You can pass a period        │
-    │                          │ argument to the IntraDay constructor to specify either 1, 5, or 30     │
-    │                          │ minute data. The number of days of data depends on the period. For     │
-    │                          │ example, 30 days of 1 minute data are available (90 days of 5 minute   │
-    │                          │ data and one year of 30 minute data).                                  │
+    │                          │ argument to the IntraDay constructor. Data will be resampled to match  │
+    │                          │ the request period in minutes. The default period is one minute.       │
     ╘══════════════════════════╧════════════════════════════════════════════════════════════════════════╛
 
 
@@ -177,7 +175,7 @@ market[:]
       <td>77.4600</td>
       <td>76.3000</td>
       <td>2019-04-26</td>
-      <td>76.868060</td>
+      <td>76.86806</td>
     </tr>
     <tr>
       <th>1</th>
@@ -240,68 +238,68 @@ market[:]
       <td>...</td>
     </tr>
     <tr>
-      <th>4531971</th>
-      <td>HOLD</td>
-      <td>175</td>
-      <td>98.7631</td>
-      <td>98.7450</td>
-      <td>98.7450</td>
-      <td>98.7450</td>
-      <td>98.7450</td>
-      <td>2021-05-10</td>
-      <td>98.745000</td>
+      <th>4573296</th>
+      <td>RBIN</td>
+      <td>1</td>
+      <td>27.6500</td>
+      <td>27.7602</td>
+      <td>27.7602</td>
+      <td>27.7602</td>
+      <td>27.7602</td>
+      <td>2021-05-14</td>
+      <td>RBIN</td>
     </tr>
     <tr>
-      <th>4531972</th>
-      <td>HLGE</td>
-      <td>13</td>
-      <td>26.3054</td>
-      <td>25.9974</td>
-      <td>25.9974</td>
-      <td>25.9974</td>
-      <td>25.9974</td>
-      <td>2021-05-10</td>
-      <td>25.997400</td>
+      <th>4573297</th>
+      <td>QPT</td>
+      <td>10</td>
+      <td>24.1599</td>
+      <td>24.2188</td>
+      <td>24.2188</td>
+      <td>24.2188</td>
+      <td>24.2188</td>
+      <td>2021-05-14</td>
+      <td>QPT</td>
     </tr>
     <tr>
-      <th>4531973</th>
-      <td>HEWC</td>
-      <td>4</td>
-      <td>30.8423</td>
-      <td>30.6740</td>
-      <td>30.6740</td>
-      <td>30.6740</td>
-      <td>30.6740</td>
-      <td>2021-05-10</td>
-      <td>30.674000</td>
+      <th>4573298</th>
+      <td>RODI</td>
+      <td>100</td>
+      <td>115.0628</td>
+      <td>116.7316</td>
+      <td>116.7316</td>
+      <td>116.7316</td>
+      <td>116.7316</td>
+      <td>2021-05-14</td>
+      <td>RODI</td>
     </tr>
     <tr>
-      <th>4531974</th>
-      <td>IBCE</td>
-      <td>125</td>
-      <td>24.8644</td>
-      <td>24.8450</td>
-      <td>24.8450</td>
-      <td>24.8450</td>
-      <td>24.8450</td>
-      <td>2021-05-10</td>
-      <td>24.845000</td>
+      <th>4573299</th>
+      <td>PSMR</td>
+      <td>344</td>
+      <td>21.0786</td>
+      <td>21.1585</td>
+      <td>21.1585</td>
+      <td>21.1585</td>
+      <td>21.1585</td>
+      <td>2021-05-14</td>
+      <td>PSMR</td>
     </tr>
     <tr>
-      <th>4531975</th>
-      <td>JHCS</td>
-      <td>40</td>
-      <td>38.5053</td>
-      <td>38.2801</td>
-      <td>38.2801</td>
-      <td>38.2801</td>
-      <td>38.2801</td>
-      <td>2021-05-10</td>
-      <td>38.280100</td>
+      <th>4573300</th>
+      <td>RODE</td>
+      <td>101</td>
+      <td>28.4830</td>
+      <td>28.8299</td>
+      <td>28.8299</td>
+      <td>28.8299</td>
+      <td>28.8299</td>
+      <td>2021-05-14</td>
+      <td>RODE</td>
     </tr>
   </tbody>
 </table>
-<p>4531976 rows × 9 columns</p>
+<p>4573301 rows × 9 columns</p>
 </div>
 
 
@@ -316,13 +314,13 @@ ticker_details('TSLA')
 
 
 
-    {'market_cap': 647710000000,
-     'shares_float': 770380000,
+    {'market_cap': 568110000000,
+     'shares_float': 774230000,
      'shares_outstanding': 963330000,
      'insider_ownership': 0.0,
-     'institutional_ownership': 0.46,
-     'retail_ownership': 0.54,
-     'short_float': 0.07,
+     'institutional_ownership': 0.44,
+     'retail_ownership': 0.56,
+     'short_float': 0.05,
      'employees': 70757,
      'has_options': True,
      'is_shortable': True}
@@ -332,8 +330,8 @@ ticker_details('TSLA')
 
 ```python
 from underdog import IntraDay
-# Last five days of TSLA intraday five minute data
-df = IntraDay('TSLA', period = 5)[-5:]
+# Last five days of TSLA intraday three minute data
+df = IntraDay('TSLA', period = 3)[-5:]
 # Filter for only regular hours trading (1 = pre-market, 2 = regular hours, 3 = extended hours)
 df[df['trading_segment'] == 2]
 ```
@@ -346,77 +344,77 @@ df[df['trading_segment'] == 2]
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>open</th>
-      <th>high</th>
-      <th>low</th>
-      <th>close</th>
-      <th>volume</th>
       <th>timestamp</th>
+      <th>open</th>
+      <th>close</th>
+      <th>low</th>
+      <th>high</th>
+      <th>volume</th>
       <th>trading_segment</th>
-      <th>timeslot</th>
       <th>twap</th>
+      <th>timeslot</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <th>49</th>
-      <td>678.8000</td>
-      <td>683.4464</td>
-      <td>675.8701</td>
-      <td>676.9100</td>
-      <td>830269</td>
-      <td>2021-05-04 09:30:00-04:00</td>
+      <th>71</th>
+      <td>2021-05-10 09:30:00-04:00</td>
+      <td>664.9000</td>
+      <td>660.2812</td>
+      <td>659.0100</td>
+      <td>665.0500</td>
+      <td>416090</td>
       <td>2</td>
-      <td>66</td>
-      <td>679.686748</td>
+      <td>661.934012</td>
+      <td>110</td>
     </tr>
     <tr>
-      <th>50</th>
-      <td>676.7600</td>
-      <td>677.8800</td>
-      <td>674.1300</td>
-      <td>676.3150</td>
-      <td>356577</td>
-      <td>2021-05-04 09:35:00-04:00</td>
+      <th>72</th>
+      <td>2021-05-10 09:33:00-04:00</td>
+      <td>660.1693</td>
+      <td>658.0200</td>
+      <td>658.0000</td>
+      <td>661.3300</td>
+      <td>215961</td>
       <td>2</td>
-      <td>67</td>
-      <td>676.003119</td>
+      <td>659.731306</td>
+      <td>111</td>
     </tr>
     <tr>
-      <th>51</th>
-      <td>676.3850</td>
-      <td>678.8000</td>
-      <td>674.2981</td>
-      <td>676.8550</td>
-      <td>433493</td>
-      <td>2021-05-04 09:40:00-04:00</td>
+      <th>73</th>
+      <td>2021-05-10 09:36:00-04:00</td>
+      <td>658.1900</td>
+      <td>656.7279</td>
+      <td>655.3400</td>
+      <td>658.4299</td>
+      <td>253527</td>
       <td>2</td>
-      <td>68</td>
-      <td>676.548856</td>
+      <td>656.850914</td>
+      <td>112</td>
     </tr>
     <tr>
-      <th>52</th>
-      <td>676.9050</td>
-      <td>676.9999</td>
-      <td>667.8985</td>
-      <td>669.8200</td>
-      <td>503220</td>
-      <td>2021-05-04 09:45:00-04:00</td>
+      <th>74</th>
+      <td>2021-05-10 09:39:00-04:00</td>
+      <td>656.5568</td>
+      <td>655.1838</td>
+      <td>653.4100</td>
+      <td>656.8100</td>
+      <td>287776</td>
       <td>2</td>
-      <td>69</td>
-      <td>672.286134</td>
+      <td>655.077686</td>
+      <td>113</td>
     </tr>
     <tr>
-      <th>53</th>
-      <td>669.8200</td>
-      <td>671.9000</td>
-      <td>668.1200</td>
-      <td>670.8808</td>
-      <td>331188</td>
-      <td>2021-05-04 09:50:00-04:00</td>
+      <th>75</th>
+      <td>2021-05-10 09:42:00-04:00</td>
+      <td>655.0050</td>
+      <td>656.0800</td>
+      <td>653.1200</td>
+      <td>656.8400</td>
+      <td>316319</td>
       <td>2</td>
-      <td>70</td>
-      <td>670.003163</td>
+      <td>654.968006</td>
+      <td>114</td>
     </tr>
     <tr>
       <th>...</th>
@@ -431,68 +429,68 @@ df[df['trading_segment'] == 2]
       <td>...</td>
     </tr>
     <tr>
-      <th>832</th>
-      <td>632.2902</td>
-      <td>633.1300</td>
-      <td>630.3750</td>
-      <td>630.4200</td>
-      <td>208316</td>
-      <td>2021-05-10 15:35:00-04:00</td>
+      <th>1422</th>
+      <td>2021-05-14 15:45:00-04:00</td>
+      <td>588.0100</td>
+      <td>589.8700</td>
+      <td>587.8400</td>
+      <td>590.3400</td>
+      <td>227810</td>
       <td>2</td>
-      <td>139</td>
-      <td>631.804244</td>
+      <td>589.114091</td>
+      <td>235</td>
     </tr>
     <tr>
-      <th>833</th>
-      <td>630.4000</td>
-      <td>630.6800</td>
-      <td>628.3800</td>
-      <td>629.2400</td>
-      <td>388961</td>
-      <td>2021-05-10 15:40:00-04:00</td>
+      <th>1423</th>
+      <td>2021-05-14 15:48:00-04:00</td>
+      <td>589.9169</td>
+      <td>589.7850</td>
+      <td>588.7513</td>
+      <td>589.9599</td>
+      <td>145852</td>
       <td>2</td>
-      <td>140</td>
-      <td>629.510306</td>
+      <td>589.354121</td>
+      <td>236</td>
     </tr>
     <tr>
-      <th>834</th>
-      <td>629.3100</td>
-      <td>630.8900</td>
-      <td>628.5000</td>
-      <td>629.3700</td>
-      <td>337088</td>
-      <td>2021-05-10 15:45:00-04:00</td>
+      <th>1424</th>
+      <td>2021-05-14 15:51:00-04:00</td>
+      <td>589.8600</td>
+      <td>590.9129</td>
+      <td>589.5000</td>
+      <td>591.1700</td>
+      <td>260416</td>
       <td>2</td>
-      <td>141</td>
-      <td>629.695056</td>
+      <td>590.329323</td>
+      <td>237</td>
     </tr>
     <tr>
-      <th>835</th>
-      <td>629.4600</td>
-      <td>629.8700</td>
-      <td>627.6101</td>
-      <td>628.4810</td>
-      <td>365889</td>
-      <td>2021-05-10 15:50:00-04:00</td>
+      <th>1425</th>
+      <td>2021-05-14 15:54:00-04:00</td>
+      <td>590.8686</td>
+      <td>590.0015</td>
+      <td>590.0000</td>
+      <td>590.9500</td>
+      <td>228326</td>
       <td>2</td>
-      <td>142</td>
-      <td>628.728706</td>
+      <td>590.485509</td>
+      <td>238</td>
     </tr>
     <tr>
-      <th>836</th>
-      <td>628.6200</td>
-      <td>630.7850</td>
-      <td>628.4326</td>
-      <td>629.0400</td>
-      <td>452539</td>
-      <td>2021-05-10 15:55:00-04:00</td>
+      <th>1426</th>
+      <td>2021-05-14 15:57:00-04:00</td>
+      <td>590.0100</td>
+      <td>589.7200</td>
+      <td>589.5000</td>
+      <td>590.9600</td>
+      <td>328648</td>
       <td>2</td>
-      <td>143</td>
-      <td>629.615056</td>
+      <td>590.233636</td>
+      <td>239</td>
     </tr>
   </tbody>
 </table>
-<p>390 rows × 9 columns</p>
+<p>650 rows × 9 columns</p>
 </div>
 
 
@@ -525,53 +523,53 @@ df
   <tbody>
     <tr>
       <th>0</th>
-      <td>44.650</td>
-      <td>44.69</td>
-      <td>44.0150</td>
-      <td>44.050</td>
-      <td>10117200</td>
-      <td>2001-05-10</td>
-      <td>44.353115</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>44.050</td>
-      <td>44.05</td>
-      <td>43.3250</td>
-      <td>43.820</td>
-      <td>8956400</td>
-      <td>2001-05-11</td>
-      <td>43.681112</td>
-    </tr>
-    <tr>
-      <th>2</th>
       <td>44.100</td>
-      <td>44.72</td>
-      <td>44.0500</td>
+      <td>44.720</td>
+      <td>44.050</td>
       <td>44.530</td>
       <td>9779400</td>
       <td>2001-05-14</td>
       <td>44.393036</td>
     </tr>
     <tr>
-      <th>3</th>
+      <th>1</th>
       <td>44.530</td>
-      <td>44.77</td>
-      <td>44.3250</td>
+      <td>44.770</td>
+      <td>44.325</td>
       <td>44.725</td>
       <td>9016800</td>
       <td>2001-05-15</td>
       <td>44.543466</td>
     </tr>
     <tr>
-      <th>4</th>
+      <th>2</th>
       <td>44.725</td>
-      <td>45.00</td>
-      <td>44.5200</td>
+      <td>45.000</td>
+      <td>44.520</td>
       <td>44.750</td>
       <td>16337000</td>
       <td>2001-05-16</td>
       <td>44.760015</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>44.575</td>
+      <td>44.580</td>
+      <td>44.135</td>
+      <td>44.365</td>
+      <td>11597600</td>
+      <td>2001-05-17</td>
+      <td>44.350867</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>44.475</td>
+      <td>45.125</td>
+      <td>44.400</td>
+      <td>45.100</td>
+      <td>14289200</td>
+      <td>2001-05-18</td>
+      <td>44.756795</td>
     </tr>
     <tr>
       <th>...</th>
@@ -584,56 +582,63 @@ df
       <td>...</td>
     </tr>
     <tr>
-      <th>5027</th>
-      <td>59.000</td>
-      <td>59.50</td>
-      <td>58.5100</td>
-      <td>59.190</td>
-      <td>23522218</td>
-      <td>2021-05-04</td>
-      <td>59.004164</td>
-    </tr>
-    <tr>
-      <th>5028</th>
-      <td>59.770</td>
-      <td>61.05</td>
-      <td>60.4800</td>
-      <td>60.970</td>
-      <td>17323686</td>
-      <td>2021-05-05</td>
-      <td>60.503865</td>
-    </tr>
-    <tr>
       <th>5029</th>
-      <td>60.860</td>
-      <td>61.64</td>
-      <td>60.0300</td>
-      <td>61.550</td>
-      <td>26836752</td>
-      <td>2021-05-06</td>
-      <td>60.817193</td>
-    </tr>
-    <tr>
-      <th>5030</th>
-      <td>61.070</td>
-      <td>62.47</td>
-      <td>60.8488</td>
-      <td>62.430</td>
-      <td>33610609</td>
-      <td>2021-05-07</td>
-      <td>61.640058</td>
-    </tr>
-    <tr>
-      <th>5031</th>
       <td>63.240</td>
-      <td>64.02</td>
-      <td>62.5300</td>
+      <td>64.020</td>
+      <td>62.530</td>
       <td>62.580</td>
       <td>31956561</td>
       <td>2021-05-10</td>
       <td>63.293827</td>
     </tr>
+    <tr>
+      <th>5030</th>
+      <td>61.625</td>
+      <td>62.385</td>
+      <td>60.385</td>
+      <td>60.590</td>
+      <td>34563768</td>
+      <td>2021-05-11</td>
+      <td>61.404912</td>
+    </tr>
+    <tr>
+      <th>5031</th>
+      <td>60.010</td>
+      <td>61.680</td>
+      <td>59.750</td>
+      <td>60.040</td>
+      <td>34426479</td>
+      <td>2021-05-12</td>
+      <td>60.715042</td>
+    </tr>
+    <tr>
+      <th>5032</th>
+      <td>59.000</td>
+      <td>60.450</td>
+      <td>58.750</td>
+      <td>59.300</td>
+      <td>24268233</td>
+      <td>2021-05-13</td>
+      <td>59.603531</td>
+    </tr>
+    <tr>
+      <th>5033</th>
+      <td>59.930</td>
+      <td>60.875</td>
+      <td>59.930</td>
+      <td>60.770</td>
+      <td>20735400</td>
+      <td>2021-05-14</td>
+      <td>60.415423</td>
+    </tr>
   </tbody>
 </table>
-<p>5032 rows × 7 columns</p>
+<p>5034 rows × 7 columns</p>
 </div>
+
+
+
+
+```python
+
+```

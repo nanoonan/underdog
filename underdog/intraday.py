@@ -16,6 +16,7 @@ from underdog.tdaclient import tda
 from underdog.tdahistoric import TDAHistoric
 from underdog.utility import (
     get_trading_segment,
+    nth_previous_trading_date,
     timestamp_to_timeslot
 )
 
@@ -79,26 +80,31 @@ class IntraDay(TDAHistoric):
         symbol: str,
         period: int = 1
     ):
-        assert period in [1, 5, 30]
+        sample_period = period
+        if sample_period % 30 == 0:
+            source_period = 30
+        elif sample_period % 5 == 0:
+            source_period = 5
+        else:
+            source_period = 1
         super().__init__(
-            symbol, '{0}/{1}'.format(constants.INTRADAY_PATH, period), 'timestamp',
-            Timespan.Minute, period
+            symbol, '{0}/{1}'.format(constants.INTRADAY_PATH, source_period), 'timestamp',
+            Timespan.Minute, source_period, sample_period
         )
 
     def _fetch(
         self,
-        start: Optional[datetime.datetime] = None,
-        end: Optional[datetime.datetime] = None
+        start: Optional[datetime.date] = None,
+        end: Optional[datetime.date] = None
     ) -> Optional[pd.DataFrame]:
         try:
             if start is None:
-                start = datetime.datetime.combine(datetime.datetime.today() - \
-                datetime.timedelta(days = 365), datetime.time())
+                start = nth_previous_trading_date(252)
             if end is None:
-                end = datetime.datetime.combine(datetime.datetime.today(), datetime.time())
-            if self._period == 1:
+                end = nth_previous_trading_date(1)
+            if self._source_period == 1:
                 frequency = tda.api.PriceHistory.Frequency.EVERY_MINUTE
-            elif self._period == 5:
+            elif self._source_period == 5:
                 frequency = tda.api.PriceHistory.Frequency.EVERY_FIVE_MINUTES
             else:
                 frequency = tda.api.PriceHistory.Frequency.EVERY_THIRTY_MINUTES
@@ -107,12 +113,33 @@ class IntraDay(TDAHistoric):
                 period_type = tda.api.PriceHistory.PeriodType.DAY,
                 frequency_type = tda.api.PriceHistory.FrequencyType.MINUTE,
                 frequency = frequency,
-                start_datetime = start,
-                end_datetime = end,
+                start_datetime = datetime.datetime.combine(start, datetime.time()) \
+                if start else None,
+                end_datetime = datetime.datetime.combine(end, datetime.time()) \
+                if end else None,
                 need_extended_hours_data = True
             )
             assert result.status_code == 200, result.raise_for_status()
-            return build_dataframe(result.json()['candles'], self.period)
+            return build_dataframe(result.json()['candles'], self._source_period)
         except Exception as exc:
             logger.error(str(exc))
             return None
+
+    def _resample(self):
+        if self._dataframe is not None:
+            if self._sample_period not in [1, 5, 30]:
+                self._dataframe = self._dataframe.set_index('timestamp')
+                rule = '{0}T'.format(str(self._sample_period))
+                self._dataframe = self._dataframe.resample(rule).aggregate(dict(
+                    open = 'first',
+                    close = 'last',
+                    low = 'min',
+                    high = 'max',
+                    volume = 'sum',
+                    trading_segment = 'first'
+                )).dropna().reset_index(drop = False)
+                self._dataframe = twap(self._dataframe)
+                self._dataframe['trading_segment'] = self._dataframe['timestamp'] \
+                .apply(lambda x: get_trading_segment(x).value)
+                self._dataframe['timeslot'] = self._dataframe['timestamp'] \
+                .apply(lambda x: timestamp_to_timeslot(x, period = self._sample_period))

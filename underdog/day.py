@@ -14,7 +14,10 @@ from underdog.datautil import twap
 from underdog.schema import Timespan
 from underdog.tdaclient import tda
 from underdog.tdahistoric import TDAHistoric
-from underdog.utility import nth_next_trading_date
+from underdog.utility import (
+    nth_next_trading_date,
+    nth_previous_trading_date
+)
 
 logger = logging.getLogger(__name__)
 
@@ -26,13 +29,13 @@ class Day(TDAHistoric):
     ):
         super().__init__(
             symbol, constants.DAY_PATH, 'date',
-            Timespan.Day, 1
+            Timespan.Day, 1, 1
         )
 
     def _fetch(
         self,
-        start: Optional[datetime.datetime] = None,
-        end: Optional[datetime.datetime] = None
+        start: Optional[datetime.date] = None,
+        end: Optional[datetime.date] = None
     ) -> Optional[pd.DataFrame]:
 
         def build_dataframe(rows):
@@ -57,11 +60,11 @@ class Day(TDAHistoric):
             df = twap(df)
             return df.sort_values('date', ascending = True).reset_index(drop = True)
 
-        start_date = datetime.datetime.combine(
-            nth_next_trading_date(1, anchor = self._dataframe.iloc[-1]['date'].date()),
-            datetime.time()
-        ) if self._dataframe is not None else None
-        end_date = end
+        if start is None:
+            start = nth_next_trading_date(1, anchor = self._dates[-1]) \
+            if self._dates else None
+        if end is None:
+            end = nth_previous_trading_date(1)
 
         try:
             result = tda.api.get_price_history(
@@ -70,8 +73,10 @@ class Day(TDAHistoric):
                 period_type = tda.api.PriceHistory.PeriodType.YEAR,
                 frequency_type = tda.api.PriceHistory.FrequencyType.DAILY,
                 frequency = tda.api.PriceHistory.Frequency.DAILY,
-                start_datetime = start_date,
-                end_datetime = end_date
+                start_datetime = datetime.datetime.combine(start, datetime.time()) \
+                if start else None,
+                end_datetime = datetime.datetime.combine(end, datetime.time()) \
+                if end else None
             )
             assert result.status_code == 200, result.raise_for_status()
             df = build_dataframe(result.json()['candles'])
@@ -80,7 +85,7 @@ class Day(TDAHistoric):
                     df = pd.concat(
                         [self._dataframe, df],
                         ignore_index = True
-                    ).reset_index(drop = True)
+                    )
             return df
         except Exception as exc:
             logger.error(str(exc))
