@@ -5,7 +5,7 @@ INTRADAY_PATH: str = 'underdog/intraday/data'
 DAY_PATH: str = 'underdog/day/data'
 MARKET_PATH: str = 'underdog/market/data'
 GENERIC_PATH: str = 'underdog/data/generic'
-STREAM_PATH: str = 'underdog/stream/data'
+STREAM_PATH: str = 'underdog/stream'
 
 POLYGON_API_KEY_ENVNAME: str = 'POLYGON_API_KEY'
 TDA_TOKEN_PATH_ENVNAME: str = 'TDA_TOKEN_PATH'

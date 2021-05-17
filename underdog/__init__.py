@@ -19,6 +19,7 @@ from underdog.schema import (
 )
 from underdog.stream import (
     StreamType,
+    StreamReader,
     StreamWriter
 )
 from underdog.tickers import tickers

@@ -10,7 +10,8 @@ import pandas as pd
 
 from parkit import (
     getenv,
-    Log
+    Log,
+    snapshot
 )
 from tda.streaming import StreamClient
 
@@ -28,41 +29,47 @@ class StreamType(enum.Enum):
     Quote = 1
     Chart = 2
 
-class LogProcessorThread(threading.Thread):
+class StreamReader(threading.Thread):
 
     def __init__(
         self,
-        log: Log,
-        handler: Any
+        name: str,
+        start: int = 0
     ):
         super().__init__()
-        self._log = log
-        self._handler = handler
+        self._log = Log(constants.STREAM_PATH + '/' + name)
+        self._start = start
+
+    def on_event(self, event) -> bool:
+        return True
 
     def run(self):
-        length = 0
-        while True:
-            self._log.wait(length)
-            cache = []
-            with snapshot(self._log):
-                for obj in self._log[length:]:
+        try:
+            length = self._start
+            while True:
+                self._log.wait(length)
+                cache = []
+                with snapshot(self._log):
+                    for obj in self._log[length:]:
+                        cache.append(obj)
+                        if obj is None:
+                            break
+                    length = len(self._log)
+                for obj in cache:
                     if obj is None:
                         return
-                    cache.append(obj)
-                length = len(self._log)
-            for obj in cache:
-                if not self._handler(obj):
-                    return
-
-class StreamReader():
-    pass
+                    elif self.on_event(obj) == True:
+                        return
+        except Exception as exc:
+            logger.error(str(exc))
 
 class StreamWriter(AsyncThread):
 
     def __init__(
         self,
         name: str,
-        config
+        config,
+        realtime: bool = False
     ):
         super().__init__()
         self._account_id = int(getenv(constants.TDA_ACCOUNT_ID_ENVNAME))
@@ -70,6 +77,7 @@ class StreamWriter(AsyncThread):
         self._log = Log(constants.STREAM_PATH + '/' + name)
         self._log.clear()
         self._config = config
+        self._realtime = realtime
 
     @property
     def log(self):
@@ -95,7 +103,7 @@ class StreamWriter(AsyncThread):
                             )
                         )
         except Exception as exc:
-            logger.error('error')
+            logger.error(str(exc))
 
     def _log_quote_writer(self, message):
         try:
@@ -124,7 +132,10 @@ class StreamWriter(AsyncThread):
 
     async def _start(self):
         await self._stream.login()
-        await self._stream.quality_of_service(StreamClient.QOSLevel.EXPRESS)
+        if self._realtime:
+            await self._stream.quality_of_service(StreamClient.QOSLevel.EXPRESS)
+        else:
+            await self._stream.quality_of_service(StreamClient.QOSLevel.DELAYED)
         for stream_type, symbols in self._config.items():
             if stream_type.value == StreamType.Quote.value:
                 self._stream.add_level_one_equity_handler(self._log_quote_writer)
@@ -138,6 +149,10 @@ class StreamWriter(AsyncThread):
     async def _handle_messages(self):
         while True:
             await self._stream.handle_message()
+
+    def stop(self) -> None:
+        super().stop()
+        self._log.append(None)
 
     def start(self) -> None:
         super().start()
