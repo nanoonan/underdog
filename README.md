@@ -9,7 +9,11 @@ from underdog import info
 
 **Requires**: Python 3.8+
 
-The *underdog* package provides Python classes and functions to easily access free equity-related data via Panda DataFrames. Data is automatically downloaded, kept up to date, and cached on disk for convenience and to improve performance and limit API requests to the data providers (which often rate limit the APIs). Currently, data is pulled from [Polygon](https://polygon.io), [finviz](https://finviz.com), and TD Ameritrade.
+The *underdog* package provides Python classes and functions to easily access free equity-related data via Panda DataFrames. Data is automatically downloaded, kept up to date, and cached on disk for convenience and to improve performance and limit API requests to the data providers (which often rate limit the APIs). Currently, data is pulled from [Polygon](https://polygon.io), [finviz](https://finviz.com), and [TD Ameritrade](https://www.tdameritrade.com/home.html).
+
+Real-time streams of time and sales, level one quotes, and one minute candle data are also supported. The data streams are written to a persistent log and the data can be accessed from multiple processes.
+
+The package is basically a convience wrapper over the underlying data services and the excellent [tda-api](https://tda-api.readthedocs.io/en/latest/index.html) package.
 
 Feel free to send questions, comments or feedback to: nanoonan at marvinsmind dot com.
 
@@ -654,7 +658,9 @@ from underdog import (
 # Define a stream reader to handle each stream event. A reader
 # runs as a background thread once started. Note: the reader
 # does not need to run in the same process as the writer.
-# Multiple readers can read the same stream.
+# Multiple readers can read the same stream. Events are represented
+# as tuples with event type, symbol, timestamps, and relevant price and size
+# info.
 class MyReader(StreamReader):
 
     def on_event(self, event):
@@ -667,7 +673,7 @@ reader.start()
 
 ```python
 # Start a stream writer for a set of symbols. In this example
-# the stream will include both chart and level 1 quote events
+# the stream includes time and sales, candle, and level 1 quote events
 # for the symbols. The stream writer writes to a persistent
 # log identified by the name passed to the constructor. One or
 # more stream readers can read the events from multiple processes.
@@ -675,8 +681,10 @@ symbols = ['TSLA', 'NIO']
 writer = StreamWriter(
     'stockstream', {
         StreamType.Chart: symbols,
-        StreamType.Quote: symbols
-    }
+        StreamType.Quote: symbols,
+        StreamType.Trade: symbols
+    },
+    realtime = True
 )
 writer.start()
 ```
