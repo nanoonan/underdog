@@ -129,7 +129,7 @@ class IntraDay(TDAHistoric):
         if self._dataframe is not None:
             if self._sample_period not in [1, 5, 30]:
                 self._dataframe = self._dataframe.set_index('timestamp')
-                rule = '{0}T'.format(str(self._sample_period))
+                rule = '{0}T'.format(self._sample_period)
                 self._dataframe = self._dataframe.resample(rule).aggregate(dict(
                     open = 'first',
                     close = 'last',

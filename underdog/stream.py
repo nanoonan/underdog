@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 class StreamType(enum.Enum):
     Quote: int = 1
     Chart: int = 2
+    Trade: int = 3
 
 class StreamReader(threading.Thread):
 
@@ -103,6 +104,26 @@ class StreamWriter(AsyncThread):
         except Exception as exc:
             logger.error(str(exc))
 
+    def _log_trade_writer(self, message: Dict[str, Any]) -> None:
+        try:
+            if message and 'content' in message:
+                timestamp = message['timestamp'] if 'timestamp' in message else None
+                for data in message['content']:
+                    if 'key' in data:
+                        symbol = data['key']
+                        trade_timestamp = data['TRADE_TIME'] \
+                        if 'TRADE_TIME' in data else None
+                        last_price = data['LAST_PRICE'] if 'LAST_PRICE' in data else None
+                        last_size = int(data['LAST_SIZE']) if 'LAST_SIZE' in data else None
+                        self._log.append(
+                            (
+                                StreamType.Trade.value, timestamp, symbol,
+                                trade_timestamp, last_price, last_size
+                            )
+                        )
+        except Exception as exc:
+            logger.error(str(exc))
+
     def _log_quote_writer(self, message: Dict[str, Any]) -> None:
         try:
             if message and 'content' in message:
@@ -141,6 +162,9 @@ class StreamWriter(AsyncThread):
             elif stream_type.value == StreamType.Chart.value:
                 self._stream.add_chart_equity_handler(self._log_chart_writer)
                 await self._stream.chart_equity_subs(symbols)
+            elif stream_type.value == StreamType.Trade.value:
+                self._stream.add_timesale_equity_handler(self._log_trade_writer)
+                await self._stream.timesale_equity_subs(symbols)
             else:
                 raise RuntimeError()
 
