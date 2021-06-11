@@ -83,7 +83,7 @@ async def _to_dict(data: Dict[str, str]) -> Dict[str, Optional[Union[float, bool
     )
 
 @lru_cache
-def ticker_details(symbol: str) -> Dict[str, Optional[Union[float, bool, int]]]:
+def fetch_ticker_details(symbol: str) -> Dict[str, Optional[Union[float, bool, int]]]:
     try:
         thread = AsyncThread()
         thread.start()
@@ -114,7 +114,7 @@ async def async_fetch_ticker_details(
                 return None
             raise RuntimeError('Server response code {0}'.format(response.status))
 
-def ticker_news(symbol: str) -> List[Dict[str, Any]]:
+def fetch_ticker_news(symbol: str) -> List[Dict[str, Any]]:
     try:
         thread = AsyncThread()
         thread.start()

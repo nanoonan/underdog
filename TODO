@@ -1,0 +1,3 @@
+
+- remove historic data not in symbols list
+- mypy/pylint

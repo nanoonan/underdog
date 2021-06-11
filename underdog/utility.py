@@ -1,16 +1,17 @@
 import bisect
 import datetime
+import math
 
 from typing import (
     Generator, Optional, Union
 )
 
+import numpy as np
 import pandas as pd
 import pandas_market_calendars as mcal
 
-from underdog.schema import (
-    Timespan,
-    TradingSegment
+from parkit import (
+    Frequency
 )
 
 _dates = [
@@ -21,7 +22,36 @@ _dates = [
     )
 ]
 
-def _resolve_date(when: Optional[Union[str, datetime.date]] = None) -> datetime.date:
+def symbol_to_float(symbol: str) -> np.float64:
+    return np.float64(int.from_bytes(symbol.upper().encode(), 'little'))
+
+def float_to_symbol(encoded: np.float64) -> str:
+    value = int(encoded)
+    return value.to_bytes(math.ceil(value.bit_length() / 8), 'little').decode()
+
+def twap(df: pd.DataFrame) -> pd.DataFrame:
+    oh = np.abs(df['open'] - df['high'])
+    ol = np.abs(df['open'] - df['low'])
+    hl = np.abs(df['high'] - df['low'])
+    lc = np.abs(df['low'] - df['close'])
+    hc = np.abs(df['high'] - df['close'])
+    ohlc = oh + hl + lc
+    olhc = ol + hl + hc
+    ohmean = (df['open'] + df['high']) / 2
+    olmean = (df['open'] + df['low']) / 2
+    hlmean = (df['high'] + df['low']) / 2
+    lcmean = (df['low'] + df['close']) / 2
+    hcmean = (df['high'] + df['close']) / 2
+    ohlctwap = (oh / ohlc) * ohmean + (hl / ohlc) * hlmean + (lc / ohlc) * lcmean
+    olhctwap = (ol / olhc) * olmean + (hl / olhc) * hlmean + (hc / olhc) * hcmean
+    df['twap'] = (ohlctwap + olhctwap) / 2
+    df['twap'] = np.where(
+        df['twap'].isnull(),
+        df['close'], df['twap']
+    )
+    return df
+
+def resolve_date(when: Optional[Union[str, datetime.date]] = None) -> datetime.date:
     if not when:
         return datetime.datetime.today().date()
     if isinstance(when, str):
@@ -32,13 +62,13 @@ def today() -> datetime.date:
     return datetime.datetime.now().date()
 
 def is_trading_date(when: Optional[Union[str, datetime.date]] = None) -> bool:
-    return _resolve_date(when) in _dates
+    return resolve_date(when) in _dates
 
 def trading_days_between(
     start: Union[str, datetime.date],
     end: Optional[Union[str, datetime.date]] = None
 ) -> int:
-    start, end = (_resolve_date(start), _resolve_date(end))
+    start, end = (resolve_date(start), resolve_date(end))
     start_index = bisect.bisect_right(_dates, start) - 1
     end_index = bisect.bisect_left(_dates, end)
     if _dates[start_index] != start:
@@ -51,7 +81,7 @@ def nth_next_trading_date(
     n: int = 1,
     anchor: Optional[Union[str, datetime.date]] = None
 ) -> datetime.date:
-    anchor = _resolve_date(anchor)
+    anchor = resolve_date(anchor)
     if n < 0:
         raise ValueError()
     if n == 0:
@@ -63,7 +93,7 @@ def nth_previous_trading_date(
     n: int = 1,
     anchor: Optional[Union[str, datetime.date]] = None
 ) -> datetime.date:
-    anchor = _resolve_date(anchor)
+    anchor = resolve_date(anchor)
     if n < 0:
         raise ValueError()
     if n == 0:
@@ -73,10 +103,10 @@ def nth_previous_trading_date(
 
 def timestamp_to_timeslot(
     timestamp: pd.Timestamp,
-    timespan: Timespan = Timespan.Minute,
+    frequency: Frequency = Frequency.Minute,
     period: int = 1
 ) -> int:
-    assert timespan.value == Timespan.Minute.value or timespan.value == Timespan.Hour.value
+    assert frequency in [Frequency.Minute, Frequency.Hour]
     base_timestamp = pd.Timestamp(
         year = timestamp.year,
         month = timestamp.month,
@@ -84,18 +114,18 @@ def timestamp_to_timeslot(
         hour = 4, minute = 0, second = 0, tz = 'US/Eastern'
     )
     timeslot = timestamp - base_timestamp
-    if timespan.value == Timespan.Minute.value:
+    if frequency.value == Frequency.Minute.value:
         seconds_divisor = 60 * period
     else:
         seconds_divisor = 3600 * period
     return int(timeslot.seconds / seconds_divisor)
 
 def timeslot_to_timestamp(
-    timeslot:int,
-    timespan: Timespan = Timespan.Minute,
+    timeslot: int,
+    frequency: Frequency = Frequency.Minute,
     period: int = 1
 ) -> Optional[pd.Timestamp]:
-    if timespan.value != Timespan.Minute.value and timespan.value != Timespan.Hour.value:
+    if frequency.value != Frequency.Minute.value and frequency.value != Frequency.Hour.value:
         return None
     current = datetime.datetime.now().date()
     opents = pd.Timestamp(
@@ -104,14 +134,14 @@ def timeslot_to_timestamp(
         day = current.day,
         hour = 4, minute = 0, second = 0, tz = 'US/Eastern'
     )
-    duration = 60 * period if timespan.value == Timespan.Minute.value else 3600 * period
+    duration = 60 * period if frequency.value == Frequency.Minute.value else 3600 * period
     return opents + pd.Timedelta(timeslot * duration, unit = 'seconds')
 
 def trading_daterange(
     start: Union[str, datetime.date],
     end: Optional[Union[str, datetime.date]] = None
 ) -> Generator[datetime.date, None, None]:
-    start, end = (_resolve_date(start), _resolve_date(end))
+    start, end = (resolve_date(start), resolve_date(end))
     start_index = bisect.bisect_right(_dates, start) - 1
     end_index = bisect.bisect_left(_dates, end)
     if _dates[start_index] != start:
@@ -128,21 +158,21 @@ def date_from_datestr(datestr: str) -> datetime.date:
     return datetime.datetime.strptime(datestr, '%Y-%m-%d').date()
 
 def market_open() -> bool:
-    return get_trading_segment() != TradingSegment.Closed
+    return get_trading_segment() != 4
 
 def market_closed() -> bool:
-    return get_trading_segment() == TradingSegment.Closed
+    return get_trading_segment() == 4
 
-def get_trading_segment(timestamp: Optional[pd.Timestamp] = None) -> TradingSegment:
+def get_trading_segment(timestamp: Optional[pd.Timestamp] = None) -> int:
     if timestamp is None:
         timestamp = pd.Timestamp.now(tz = 'US/Eastern')
     assert str(timestamp.tz) == 'US/Eastern'
     if timestamp.hour >= 16 and timestamp.hour < 20:
-        return TradingSegment.ExtendedHours
+        return 3
     if (timestamp.hour >= 4) and (timestamp.hour < 9 or \
     (timestamp.hour == 9 and timestamp.minute < 30)):
-        return TradingSegment.PreMarket
+        return 1
     if timestamp.hour < 16 and ((timestamp.hour == 9 and timestamp.minute >= 30) \
     or (timestamp.hour > 9)):
-        return TradingSegment.RegularHours
-    return TradingSegment.Closed
+        return 2
+    return 4
