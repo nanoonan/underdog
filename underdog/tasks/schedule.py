@@ -15,22 +15,25 @@ from parkit import (
 
 logger = logging.getLogger(__name__)
 
+overnight_scheduler = lambda: Periodic(
+    'scheduler/overnight',
+    frequency = Frequency.Day,
+    period = 1,
+    # start = 'tomorrow 1 am'
+    start = 'now'
+)
+
+market_open_scheduler = lambda: Periodic(
+    'scheduler/market-open',
+    frequency = Frequency.Day,
+    period = 1,
+    start = 'tomorrow 3:55 am'
+)
+
 schedulers = dict(
-    polygon = lambda: Periodic(
-        'scheduler/overnight',
-        frequency = Frequency.Day,
-        period = 1
-    ),
-    tdahistoric = lambda: Periodic(
-        'scheduler/overnight',
-        frequency = Frequency.Day,
-        period = 1
-    ),
-    tdastream = lambda: Periodic(
-        'scheduler/market-open',
-        frequency = Frequency.Day,
-        period = 1
-    )
+    polygon = overnight_scheduler,
+    tdahistoric = overnight_scheduler,
+    tdastream = market_open_scheduler
 )
 
 def schedule(
@@ -62,9 +65,5 @@ def scheduled() -> List[Dict[str, Union[None, str, datetime.datetime]]]:
     status = []
     for scheduler in {builder() for builder in schedulers.values()}:
         for task in scheduler.tasks:
-            status.append(dict(
-                task = task.name,
-                last_run = scheduler.last_run(task),
-                next_run = scheduler.next_run(task)
-            ))
+            status.append(task.name)
     return status

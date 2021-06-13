@@ -5,7 +5,8 @@ import pandas as pd
 from parkit import (
     Dict,
     File,
-    polling_loop
+    polling_loop,
+    self
 )
 
 from underdog.tda import (
@@ -22,22 +23,36 @@ logger = logging.getLogger(__name__)
 def tdahistoric():
     try:
         logger.info('start tdahistoric')
+
         if 'symbols' not in Dict('settings'):
             logger.info('no symbols found')
             return
         logger.info('fetch historic ticker data')
+
         symbols = Dict('settings')['symbols']
+
         for _ in polling_loop(61):
 
-            for symbol in symbols[0:30]:
+            count = 0
+            while count < 30:
+
+                if len(symbols) == 0:
+                    return
+
+                symbol = symbols.pop()
+
                 agg_df = None
                 with File('tdahistoric/daily/{0}'.format(symbol.upper()), mode = 'rb') as file:
                     if not file.empty:
                         agg_df = pd.read_feather(file)
                 start = None if agg_df is None else \
                 nth_next_trading_date(1, anchor = agg_df['date'].max().date())
-                if start > nth_previous_trading_date(1):
+
+                if start is not None and start > nth_previous_trading_date(1):
+                    logger.info('skipping %s', symbol)
                     continue
+                count += 1
+
                 logger.info('fetch %s daily', symbol)
                 df = fetch_daily(symbol, start = start)
                 if df is not None:
@@ -75,9 +90,5 @@ def tdahistoric():
                             mode = 'wb'
                         ) as file:
                             agg_df.to_feather(file)
-
-            symbols = symbols[30:]
-            if len(symbols) == 0:
-                break
     finally:
         logger.info('stop tdahistoric')

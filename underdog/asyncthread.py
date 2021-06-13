@@ -7,7 +7,7 @@ import threading
 import time
 
 from typing import (
-    Any, Awaitable, cast
+    Any, Awaitable, cast, Optional
 )
 
 logger = logging.getLogger(__name__)
@@ -19,10 +19,11 @@ class AsyncThreadState(enum.Enum):
 
 class AsyncThread(threading.Thread):
 
-    def __init__(self) -> None:
+    def __init__(self, interrupt: Optional[float] = None):
         super().__init__()
         self._loop: Any = None
         self._state: AsyncThreadState = AsyncThreadState.Created
+        self._interrupt = interrupt
 
     @property
     def state(self) -> AsyncThreadState:
@@ -34,6 +35,15 @@ class AsyncThread(threading.Thread):
         while self._loop is None or not self._loop.is_running():
             time.sleep(0)
         self._state = AsyncThreadState.Started
+        if self._interrupt is not None:
+            self._loop.call_later(self._interrupt, self.interrupt)
+
+    def interrupt(self):
+        self.on_timer_event()
+        self._loop.call_later(self._interrupt, self.interrupt)
+
+    def on_timer_event(self):
+        pass
 
     async def _stop_(self) -> None:
         try:

@@ -1,3 +1,5 @@
+from underdog.tasks.nightlyupdate import nightly_update
+
 from underdog.tasks.polygon import polygon
 
 from underdog.tasks.schedule import (

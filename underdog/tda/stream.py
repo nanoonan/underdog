@@ -1,7 +1,7 @@
 import logging
 
 from typing import (
-    Any, Dict
+    Any, Dict, Optional
 )
 
 from parkit import (
@@ -27,9 +27,10 @@ class Stream(AsyncThread):
         *,
         site: str,
         config: Dict[str, Dict[str, Any]],
-        realtime: bool = True
+        realtime: bool = True,
+        interrupt: Optional[float] = None
     ):
-        super().__init__()
+        super().__init__(interrupt)
         set_site(site)
         self._account_id = int(getenv(constants.TDA_ACCOUNT_ID_ENVNAME))
         self._stream = StreamClient(tda.api, account_id = self._account_id)
@@ -49,6 +50,7 @@ class Stream(AsyncThread):
         try:
             if message and 'content' in message:
                 timestamp = message['timestamp'] if 'timestamp' in message else None
+                count = 0
                 for data in message['content']:
                     if 'key' in data:
                         symbol = data['key']
@@ -58,12 +60,14 @@ class Stream(AsyncThread):
                         high = data['HIGH_PRICE'] if 'HIGH_PRICE' in data else None
                         low = data['LOW_PRICE'] if 'LOW_PRICE' in data else None
                         volume = int(data['VOLUME']) if 'VOLUME' in data else None
+                        count += 1
                         self.on_chart_event(
                             (
                                 timestamp, symbol,
                                 candle_timestamp, open, close, high, low, volume
                             )
                         )
+                self.on_chart_event(count)
         except Exception:
             logger.exception('error handling chart event')
 

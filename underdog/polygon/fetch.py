@@ -10,7 +10,7 @@ import aiohttp
 import pandas as pd
 
 from parkit import (
-    current_site,
+    get_site,
     File,
     getenv,
     polling_loop
@@ -114,9 +114,9 @@ async def async_fetch_market(
                         else:
                             agg_df = pd.concat([agg_df, df])
                         agg_df = agg_df.sort_values(['date', 'symbol']).reset_index(drop = True)
-                        with File('polygon/market', site = site, mode = 'wb') as file:
-                            agg_df.to_feather(file)
                 if len(dates) == 0:
+                    with File('polygon/market', site = site, mode = 'wb') as file:
+                        agg_df.to_feather(file)
                     return
 
 def fetch_market():
@@ -125,7 +125,7 @@ def fetch_market():
         thread = AsyncThread()
         thread.start()
         api_key = getenv(constants.POLYGON_API_KEY_ENVNAME)
-        thread.run_task(async_fetch_market(api_key, current_site()))
+        thread.run_task(async_fetch_market(api_key, get_site()))
     finally:
         if thread:
             thread.stop()

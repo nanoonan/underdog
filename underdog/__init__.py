@@ -8,10 +8,8 @@ from underdog.functions import (
 )
 
 from underdog.tasks import (
+    nightly_update,
     polygon,
-    schedule,
-    scheduled,
-    get_schedulers,
     tdahistoric,
     tdastream
 )

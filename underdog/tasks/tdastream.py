@@ -2,13 +2,15 @@ import logging
 import time
 import typing
 
-from typing import Any
+from typing import (
+    Any, Optional
+)
 
 import numpy as np
 import pandas as pd
 
 from parkit import (
-    current_site,
+    get_site,
     Dict,
     File
 )
@@ -31,8 +33,10 @@ class Stream(tda.Stream):
         *,
         site: str,
         config: typing.Dict[str, typing.Dict[str, Any]],
-        realtime: bool = True
+        realtime: bool = True,
+        interrupt: Optional[float] = None
     ):
+        super().__init__(site = site, config = config, realtime = realtime, interrupt = interrupt)
         self._config = config
         if 'chart' in self._config.keys():
             self._chart_file = self._config['chart']['file']
@@ -41,7 +45,6 @@ class Stream(tda.Stream):
             assert self._chart_file.shape[0] == 960
             assert self._chart_file.shape[1] == len(self._chart_symbols)
             assert self._chart_file.shape[2] == 6
-            super().__init__(site = site, config = self._config, realtime = realtime)
             self._chart_file.mode = 'rb'
             self._chart_cache = np.ndarray(
                 shape = self._chart_file.shape,
@@ -50,20 +53,29 @@ class Stream(tda.Stream):
             )
             self._chart_file.mode = 'wb'
 
+    def on_trade_event(self, event):
+        pass
+
+    def on_timer_event(self):
+        pass
+
     def on_chart_event(self, event):
         if 'chart' in self._config:
-            timeslot = timestamp_to_timeslot(
-                pd.Timestamp(pd.Timestamp(event[2], tz = 'US/Eastern', unit = 'ms'))
-            )
-            logger.info('%i %s', timeslot, str(event))
-            index = self._chart_symbols.index(event[1])
-            self._chart_cache[timeslot, index, :] = \
-            [
-                np.float64(event[3]), np.float64(event[4]), np.float64(event[5]),
-                np.float64(event[6]), np.float64(event[7]), 1.
-            ]
-            if np.sum(self._chart_cache[timeslot, :, 5]) == self._chart_file.shape[1]:
-                self._chart_file.content = self._chart_cache.data
+            if isinstance(event, int):
+                if event > 0:
+                    logger.info('flushing %i events', event)
+                    self._chart_file.content = self._chart_cache.data
+            else:
+                timeslot = timestamp_to_timeslot(
+                    pd.Timestamp(pd.Timestamp(event[2], tz = 'US/Eastern', unit = 'ms'))
+                )
+                logger.info('%i %s', timeslot, str(event))
+                index = self._chart_symbols.index(event[1])
+                self._chart_cache[timeslot, index, :] = \
+                [
+                    np.float64(event[3]), np.float64(event[4]), np.float64(event[5]),
+                    np.float64(event[6]), np.float64(event[7]), 1.
+                ]
 
 #
 # Data Format
@@ -87,9 +99,10 @@ def tdastream():
         chart_file.dtype = data.dtype
         logger.info('file size %i', chart_file.size)
         stream = Stream(
-            site = current_site(),
+            site = get_site(),
             config = dict(
-                chart = dict(symbols = symbols, file = chart_file)
+                chart = dict(symbols = symbols, file = chart_file),
+                trade = dict(symbols = symbols)
             )
         )
         stream.start()

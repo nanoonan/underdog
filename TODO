@@ -1,3 +1,4 @@
 
 - remove historic data not in symbols list
 - mypy/pylint
+- put tdastream into memory namespace
