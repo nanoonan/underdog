@@ -1,0 +1,30 @@
+Data Cache Guarantees
+---------------------
+
+Price/Volume:
+- Contains at most only data matching symbols list
+- Data for a symbol is a pd.DataFrame and not empty (at least on row)
+- Intraday data contains one row per timeslot (NaN prices for no trades)
+- Dates covered may differ between symbols
+- Data valid (no NaN of Inf, fields typed correctly and within valid ranges)
+
+Ticker:
+- details and news may both be None
+- any field in details may also be None
+
+Cache Structure
+---------------
+
+cache/daily/{symbol}
+cache/intraday/{period}/{symbol}
+cache/market
+cache/tickers/{symbol}
+cache/symbols
+
+Install Kats
+------------
+
+python -m pip install pystan==2.17.1.0
+python -m pip install fbprophet==0.6
+python -m pip install --upgrade fbprophet
+python -m install kats

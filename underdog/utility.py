@@ -10,9 +10,7 @@ import numpy as np
 import pandas as pd
 import pandas_market_calendars as mcal
 
-from parkit import (
-    Frequency
-)
+from parkit import Frequency
 
 _dates = [
     date.date()
@@ -58,9 +56,6 @@ def resolve_date(when: Optional[Union[str, datetime.date]] = None) -> datetime.d
         return datetime.datetime.strptime(when, '%Y-%m-%d').date()
     return when
 
-def today() -> datetime.date:
-    return datetime.datetime.now().date()
-
 def is_trading_date(when: Optional[Union[str, datetime.date]] = None) -> bool:
     return resolve_date(when) in _dates
 
@@ -103,10 +98,10 @@ def nth_previous_trading_date(
 
 def timestamp_to_timeslot(
     timestamp: pd.Timestamp,
-    frequency: Frequency = Frequency.Minute,
+    frequency: Frequency = Frequency.MINUTE,
     period: int = 1
 ) -> int:
-    assert frequency in [Frequency.Minute, Frequency.Hour]
+    assert frequency in [Frequency.MINUTE, Frequency.HOUR]
     base_timestamp = pd.Timestamp(
         year = timestamp.year,
         month = timestamp.month,
@@ -114,7 +109,7 @@ def timestamp_to_timeslot(
         hour = 4, minute = 0, second = 0, tz = 'US/Eastern'
     )
     timeslot = timestamp - base_timestamp
-    if frequency.value == Frequency.Minute.value:
+    if frequency.value == Frequency.MINUTE.value:
         seconds_divisor = 60 * period
     else:
         seconds_divisor = 3600 * period
@@ -122,19 +117,19 @@ def timestamp_to_timeslot(
 
 def timeslot_to_timestamp(
     timeslot: int,
-    frequency: Frequency = Frequency.Minute,
-    period: int = 1
+    frequency: Frequency = Frequency.MINUTE,
+    period: int = 1,
+    date: pd.Timestamp = pd.Timestamp.now()
 ) -> Optional[pd.Timestamp]:
-    if frequency.value != Frequency.Minute.value and frequency.value != Frequency.Hour.value:
+    if frequency.value != Frequency.MINUTE.value and frequency.value != Frequency.HOUR.value:
         return None
-    current = datetime.datetime.now().date()
     opents = pd.Timestamp(
-        year = current.year,
-        month = current.month,
-        day = current.day,
+        year = date.year,
+        month = date.month,
+        day = date.day,
         hour = 4, minute = 0, second = 0, tz = 'US/Eastern'
     )
-    duration = 60 * period if frequency.value == Frequency.Minute.value else 3600 * period
+    duration = 60 * period if frequency.value == Frequency.MINUTE.value else 3600 * period
     return opents + pd.Timedelta(timeslot * duration, unit = 'seconds')
 
 def trading_daterange(
@@ -157,22 +152,46 @@ def datestr_from_date(date: datetime.date) -> str:
 def date_from_datestr(datestr: str) -> datetime.date:
     return datetime.datetime.strptime(datestr, '%Y-%m-%d').date()
 
-def market_open() -> bool:
-    return get_trading_segment() != 4
+def isfinite(x):
+    return not np.isnan(x) and not np.isneginf(x) and not np.isposinf(x)
 
-def market_closed() -> bool:
-    return get_trading_segment() == 4
+# def twap_(o, h, l, c):
+#     oh = np.abs(o - h)
+#     ol = np.abs(o - l)
+#     hl = np.abs(h - l)
+#     lc = np.abs(l - c)
+#     hc = np.abs(h - c)
+#     ohlc = oh + hl + lc
+#     olhc = ol + hl + hc
+#     ohmean = (o + h) / 2
+#     olmean = (o + l) / 2
+#     hlmean = (h + l) / 2
+#     lcmean = (l + c) / 2
+#     hcmean = (h + c) / 2
+#     ohlctwap = (oh / ohlc) * ohmean + (hl / ohlc) * hlmean + (lc / ohlc) * lcmean
+#     olhctwap = (ol / olhc) * olmean + (hl / olhc) * hlmean + (hc / olhc) * hcmean
+#     return (ohlctwap + olhctwap) / 2
 
-def get_trading_segment(timestamp: Optional[pd.Timestamp] = None) -> int:
-    if timestamp is None:
-        timestamp = pd.Timestamp.now(tz = 'US/Eastern')
-    assert str(timestamp.tz) == 'US/Eastern'
-    if timestamp.hour >= 16 and timestamp.hour < 20:
-        return 3
-    if (timestamp.hour >= 4) and (timestamp.hour < 9 or \
-    (timestamp.hour == 9 and timestamp.minute < 30)):
-        return 1
-    if timestamp.hour < 16 and ((timestamp.hour == 9 and timestamp.minute >= 30) \
-    or (timestamp.hour > 9)):
-        return 2
-    return 4
+# def resample(
+#     df: pd.DataFrame,
+#     period: int
+# ) -> pd.DataFrame:
+#     return df
+#     if period not in [1, 5, 30]:
+#         df = df.set_index('timestamp')
+#         rule = '{0}T'.format(period)
+#         df = df.resample(rule).aggregate(dict(
+#             open = 'first',
+#             close = 'last',
+#             low = 'min',
+#             high = 'max',
+#             volume = 'sum',
+#             date = 'first',
+#             symbol = 'first'
+#         )).dropna().reset_index(drop = False)
+#         df = twap(df)
+#         df['trading_segment'] = df['timestamp'] \
+#         .apply(get_trading_segment)
+#         df['timeslot'] = df['timestamp'] \
+#         .apply(lambda x: timestamp_to_timeslot(x, period = period))
+#     return df

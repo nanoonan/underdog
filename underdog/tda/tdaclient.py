@@ -1,4 +1,3 @@
-# pylint: disable = too-few-public-methods
 import logging
 import threading
 
@@ -18,6 +17,18 @@ class TDA(threading.local):
         self._token_path = getenv(constants.TDA_TOKEN_PATH_ENVNAME)
         self._api_key = getenv(constants.TDA_API_KEY_ENVNAME)
         self._redirect_uri = getenv(constants.TDA_REDIRECT_URI_ENVNAME)
+
+    @property
+    def api_key(self) -> str:
+        return self._api_key
+
+    @property
+    def token_path(self) -> str:
+        return self._token_path
+
+    @property
+    def redirect_uri(self) -> str:
+        return self._redirect_uri
 
     @property
     def api(self):

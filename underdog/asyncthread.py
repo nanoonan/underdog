@@ -39,10 +39,10 @@ class AsyncThread(threading.Thread):
             self._loop.call_later(self._interrupt, self.interrupt)
 
     def interrupt(self):
-        self.on_timer_event()
+        self.on_interrupt_event()
         self._loop.call_later(self._interrupt, self.interrupt)
 
-    def on_timer_event(self):
+    def on_interrupt_event(self):
         pass
 
     async def _stop_(self) -> None:

@@ -1,4 +1,4 @@
+0.0.1
 
-- remove historic data not in symbols list
-- mypy/pylint
-- put tdastream into memory namespace
+0.0.2
+- implement resampling for intraday

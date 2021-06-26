@@ -1,16 +1,19 @@
-# pylint: disable = broad-except, too-many-return-statements
 import datetime
+import logging
 
 from typing import (
    Any, Dict, List, Optional, Union
 )
 
-from functools import lru_cache
-
 import aiohttp
 from lxml import html
 
+import underdog.constants as constants
+
 from underdog.asyncthread import AsyncThread
+from underdog.ratelimiter import RateLimiter
+
+logger = logging.getLogger(__name__)
 
 _stock_url = 'https://finviz.com/quote.ashx'
 
@@ -22,6 +25,12 @@ _headers = {
     AppleWebKit/537.36 (KHTML, like Gecko)
     Chrome/39.0.2171.95 Safari/537.36"""
 }
+
+rate_limiter = RateLimiter(
+    'finviz_rate_limiter',
+    constants.FINVIZ_REQUEST_INTERVAL,
+    constants.FINVIZ_MAX_REQUESTS_PER_INTERVAL
+)
 
 def _parse_stock_data_field(
     data: Dict[str, str],
@@ -36,7 +45,7 @@ def _parse_stock_data_field(
             if value == "No":
                 return False
             return False
-        except Exception:
+        except KeyError:
             return False
     if valuetype is float or valuetype is int:
         multiplier = 1.0
@@ -51,8 +60,8 @@ def _parse_stock_data_field(
             data[key] = data[key][0:-1]
         try:
             return valuetype(float(data[key]) * multiplier)
-        except Exception:
-            return None
+        except ValueError:
+            pass
     return None
 
 def safe_round(value: Optional[float], places: int = 0) -> Optional[float]:
@@ -82,8 +91,7 @@ async def _to_dict(data: Dict[str, str]) -> Dict[str, Optional[Union[float, bool
         is_shortable = _parse_stock_data_field(data, bool, 'Shortable')
     )
 
-@lru_cache
-def fetch_ticker_details(symbol: str) -> Dict[str, Optional[Union[float, bool, int]]]:
+def fetch_ticker_details(symbol: str) -> Optional[Dict[str, Optional[Union[float, bool, int]]]]:
     try:
         thread = AsyncThread()
         thread.start()
@@ -94,27 +102,34 @@ def fetch_ticker_details(symbol: str) -> Dict[str, Optional[Union[float, bool, i
 async def async_fetch_ticker_details(
     symbol: str
 ) -> Optional[Dict[str, Optional[Union[float, bool, int]]]]:
+    context = None
     async with aiohttp.ClientSession() as session:
-        async with session.get(
-            _stock_url, headers = _headers, params = {'t': symbol}
-        ) as response:
-            if response.status == 200:
-                page = html.fromstring(await response.text())
-                data = {}
-                all_rows = [
-                    row.xpath('td//text()')
-                    for row in page.cssselect('tr[class="table-dark-row"]')
-                ]
-                for row in all_rows:
-                    for column in range(0, 11):
-                        if column % 2 == 0:
-                            data[row[column]] = row[column + 1]
-                return await _to_dict(data)
-            if response.status == 404:
-                return None
-            raise RuntimeError('Server response code {0}'.format(response.status))
+        for context in rate_limiter.try_request(
+            constants.FINVIZ_FETCH_RETRY_LIMIT
+        ):
+            with context:
+                async with session.get(
+                    _stock_url, headers = _headers, params = {'t': symbol}
+                ) as response:
+                    if response.status == 200:
+                        page = html.fromstring(await response.text())
+                        data = {}
+                        all_rows = [
+                            row.xpath('td//text()')
+                            for row in page.cssselect('tr[class="table-dark-row"]')
+                        ]
+                        for row in all_rows:
+                            for column in range(0, 11):
+                                if column % 2 == 0:
+                                    data[row[column]] = row[column + 1]
+                        return await _to_dict(data)
+                    if response.status == 404:
+                        return None
+                    raise RuntimeError('Server response code {0}'.format(response.status))
+    logger.error('error fetching ticker details for %s: %s', symbol, str(context.errors[-1]))
+    return None
 
-def fetch_ticker_news(symbol: str) -> List[Dict[str, Any]]:
+def fetch_ticker_news(symbol: str) -> Optional[List[Dict[str, Any]]]:
     try:
         thread = AsyncThread()
         thread.start()
@@ -122,37 +137,49 @@ def fetch_ticker_news(symbol: str) -> List[Dict[str, Any]]:
     finally:
         thread.stop()
 
-async def async_fetch_ticker_news(symbol: str) -> List[Dict[str, Any]]:
+async def async_fetch_ticker_news(symbol: str) -> Optional[List[Dict[str, Any]]]:
+    context = None
     async with aiohttp.ClientSession() as session:
-        async with session.get(_stock_url, headers = _headers, params = {'t': symbol}) as response:
-            if response.status == 200:
-                page = html.fromstring(await response.text())
-                news = page.cssselect('a[class="tab-link-news"]')
-                dates = []
-                for i, _ in enumerate(news):
-                    tr = news[i].getparent().getparent().getparent().getparent()
-                    date_str = tr[0].text.strip()
-                    if ' ' not in date_str:
-                        tbody = tr.getparent()
-                        previous_date_str = ''
-                        j = 1
-                        while ' ' not in previous_date_str:
-                            try:
-                                previous_date_str = tbody[i-j][0].text.strip()
-                            except IndexError:
-                                break
-                            j += 1
-                        date_str = ' '.join([previous_date_str.split(' ')[0], date_str])
-                    news_date = datetime.datetime.strptime(date_str, "%b-%d-%y %I:%M%p")
-                    dates.append(news_date)
-                headlines = [row.xpath('text()')[0] for row in news]
-                urls = [row.get('href') for row in news]
-                items = []
-                for date, headline, url in list(zip(dates, headlines, urls)):
-                    items.append(dict(
-                        date = str(date),
-                        headline = headline,
-                        url = url
-                    ))
-                return items
-            raise RuntimeError('Server response code {0}'.format(response.status))
+        for context in rate_limiter.try_request(
+            constants.FINVIZ_FETCH_RETRY_LIMIT
+        ):
+            with context:
+                async with session.get(
+                    _stock_url, headers = _headers, params = {'t': symbol}
+                ) as response:
+                    if response.status == 200:
+                        page = html.fromstring(await response.text())
+                        news = page.cssselect('a[class="tab-link-news"]')
+                        dates = []
+                        for i, _ in enumerate(news):
+                            tr = news[i].getparent().getparent().getparent().getparent()
+                            date_str = tr[0].text.strip()
+                            if ' ' not in date_str:
+                                tbody = tr.getparent()
+                                previous_date_str = ''
+                                j = 1
+                                while ' ' not in previous_date_str:
+                                    try:
+                                        previous_date_str = tbody[i-j][0].text.strip()
+                                    except IndexError:
+                                        break
+                                    j += 1
+                                date_str = ' '.join([previous_date_str.split(' ')[0], date_str])
+                            dates.append(
+                                datetime.datetime.strptime(date_str, "%b-%d-%y %I:%M%p")
+                            )
+                        headlines = [row.xpath('text()')[0] for row in news]
+                        urls = [row.get('href') for row in news]
+                        items = []
+                        for date, headline, url in list(zip(dates, headlines, urls)):
+                            items.append(dict(
+                                date = str(date),
+                                headline = headline,
+                                url = url
+                            ))
+                        return items
+                    if response.status == 404:
+                        return None
+                    raise RuntimeError('Server response code {0}'.format(response.status))
+        logger.error('error fetching ticker news for %s: %s', symbol, str(context.errors[-1]))
+        return None
