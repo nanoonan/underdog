@@ -139,7 +139,8 @@ def get_intraday(
     df = fetch_intraday(
         symbol, period = source_period,
         start = datetime.datetime.now().date(),
-        end = datetime.datetime.now().date()
+        end = datetime.datetime.now().date(),
+        max_attempts = 1
     )
     if df is None:
         raise ObjectNotFoundError()

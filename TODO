@@ -2,3 +2,7 @@
 
 0.0.2
 - implement resampling for intraday
+- standardize column ordering
+- validate if volume is 0 prices are nan
+- global ticker table
+- earnings data

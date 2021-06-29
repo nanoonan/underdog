@@ -1,6 +1,7 @@
 import datetime
 import json
 import logging
+import time
 
 from typing import (
     Dict, List, Optional, Union
@@ -17,6 +18,7 @@ import underdog.constants as constants
 from underdog.asyncthread import AsyncThread
 from underdog.ratelimiter import RateLimiter
 from underdog.utility import (
+    encode_symbol,
     nth_previous_trading_date,
     trading_daterange,
     twap
@@ -38,6 +40,7 @@ def build_dataframe(
         return None
 
     df = pd.DataFrame(rows)
+
     df = df.rename(
         columns = {
             'o':'open',
@@ -50,24 +53,20 @@ def build_dataframe(
         }
     )
 
-    with pd.option_context('mode.use_inf_as_null', True):
-        df = df.dropna()
-
-    if len(df) == 0:
-        return None
-
     if 'n' in df.columns.to_list():
         df = df.drop('n', axis = 1)
     if 't' in df.columns.to_list():
         df = df.drop('t', axis = 1)
+
     df = df.astype({
-        'volume': np.int64,
+        'volume': np.float64,
         'open': np.float64,
         'close': np.float64,
         'high': np.float64,
         'low': np.float64,
         'vwap': np.float64
     })
+
     df = df[
         (df['volume'] >= 0) & \
         (df['open'] > 0) & \
@@ -76,13 +75,16 @@ def build_dataframe(
         (df['low'] > 0) & \
         (df['vwap'] > 0)
     ]
+
     with pd.option_context('mode.use_inf_as_null', True):
         df = df.dropna()
 
     if len(df) == 0:
         return None
 
+    df['symbol'] = df['symbol'].apply(encode_symbol)
     df = twap(df)
+
     return df.reset_index(drop = True)
 
 async def async_fetch_grouped_daily(
@@ -105,15 +107,16 @@ async def async_fetch_grouped_daily(
                     result = json.loads(await response.text())
                     if result['status'] == 'OK':
                         if result['resultsCount'] > 0:
+                            df = build_dataframe([
+                                {**row, **{'date': np.float64(time.mktime(date.timetuple()))}}
+                                for row in result['results']
+                            ])
                             if context.attempts > 1:
                                 logger.warning(
                                     '%i attempts fetching market data for %s',
                                     context.attempts, str(date)
                                 )
-                            return build_dataframe([
-                                {**row, **{'date': pd.Timestamp(date)}}
-                                for row in result['results']
-                            ])
+                            return df
                         raise RuntimeError('no results returned for {0}'.format(date))
                     raise RuntimeError('response status is {0}'.format(result['status']))
                 raise RuntimeError('server response code {0}'.format(response.status))
@@ -126,14 +129,14 @@ async def async_fetch_market(
 ) -> Optional[pd.DataFrame]:
     async with aiohttp.ClientSession() as session:
         dates = list(trading_daterange(
-            nth_previous_trading_date(504),
+            nth_previous_trading_date(2),
             nth_previous_trading_date(1)
         ))
-        for date in dates:
-            if agg_df is None or len(agg_df[agg_df['date'] == str(date)]) == 0:
+        for date in [np.float64(time.mktime(date.timetuple())) for date in dates]:
+            if agg_df is None or len(agg_df[agg_df['date'] == date]) == 0:
                 df = await async_fetch_grouped_daily(
                     session,
-                    date,
+                    datetime.datetime.fromtimestamp(date).date(),
                     api_key
                 )
                 if df is not None:
