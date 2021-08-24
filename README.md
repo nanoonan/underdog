@@ -37,4 +37,6 @@ TDA_ACCOUNT_ID | Account id for your TDA trading account
 symbols = ['TSLA', 'AAL', 'MSFT']
 schedule(update_cache, frequency = Frequency.DAY, period = 1, start = 'tomorrow 12:05 am', symbols = symbols)
 
+# Get Panda DataFrame for TSLA 1 minute data
+df = File('cache/intraday/1/TSLA').get_content()
 ```
