@@ -1,9 +1,9 @@
 ## Overview
-**Status**: Pre-Alpha
-
-**Tested**: Windows only
-
-**Requires**: Python 3.8+
+Status | Value
+---|---
+**Quality** | Pre-Alpha
+**Tested** | Windows only
+**Requires** | Python 3.8+
 
 The *underdog* package provides Python classes and functions to easily access free equity-related data via Panda DataFrames. Data is automatically downloaded, kept up to date, and cached on disk for convenience and to improve performance and limit API requests to the data providers (which often rate limit the APIs). Currently, data is pulled from [Polygon](https://polygon.io), [finviz](https://finviz.com), and [TD Ameritrade](https://www.tdameritrade.com/home.html).
 
@@ -23,16 +23,10 @@ python -m pip install .
 
 4. Finally, set up the environment variables used to access data from your accounts. The next cell describes these variables.
 
-╒════════════════════════╤═══════════════════════════════════════════════╕
-│ Environment Variable   │ Description                                   │
-╞════════════════════════╪═══════════════════════════════════════════════╡
-│ POLYGON_API_KEY        │ The API key from your Polygon account.        │
-├────────────────────────┼───────────────────────────────────────────────┤
-│ TDA_TOKEN_PATH         │ Path to file where TDA auth token is stored.  │
-├────────────────────────┼───────────────────────────────────────────────┤
-│ TDA_API_KEY            │ The API key from your TDA developer account.  │
-├────────────────────────┼───────────────────────────────────────────────┤
-│ TDA_REDIRECT_URI       │ In most cases this will be https://localhost. │
-├────────────────────────┼───────────────────────────────────────────────┤
-│ TDA_ACCOUNT_ID         │ Account id for your TDA trading account.      │
-╘════════════════════════╧═══════════════════════════════════════════════╛
+Environment Variable | Description
+---|---
+POLYGON_API_KEY | The API key from your Polygon account
+TDA_TOKEN_PATH | Path to file where TDA auth token is stored
+TDA_API_KEY | The API key from your TDA developer account
+TDA_REDIRECT_URI | In most cases this will be https://localhost
+TDA_ACCOUNT_ID | Account id for your TDA trading account
