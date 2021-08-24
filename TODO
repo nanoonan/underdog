@@ -1,4 +1,6 @@
 0.0.1
+- access table with column labels
+- better maptable error handling
 
 0.0.2
 - implement resampling for intraday

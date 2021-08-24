@@ -80,8 +80,8 @@ class RealtimeStream(tda.Stream):
 )
 def realtime_stream(
     symbols: Iterable[str],
-    bufsize: int,
-    site_uuid: Optional[str]
+    bufsize: int = 4096000,
+    site_uuid: Optional[str] = None
 ):
     if cardinality.count(symbols) == 0 or \
     cardinality.count(symbols) > constants.TDA_MAX_REALTIME_SYMBOLS:

@@ -1,48 +1,20 @@
 import logging
 
-import numba
-import numpy as np
-
 logger = logging.getLogger(__name__)
 
-@numba.jit(nopython = True, nogil = True, cache = True)
-def date_col(array: np.ndarray, timeslot: np.float64):
-    if array.shape[1] == 8:
-        return array[array[:,0] == timeslot, 7]
-    raise NotImplementedError()
+INTRADAY_TIMESLOT: int = 0
+INTRADAY_OPEN: int = 1
+INTRADAY_HIGH: int = 2
+INTRADAY_LOW: int = 3
+INTRADAY_CLOSE: int = 4
+INTRADAY_VOLUME: int = 5
+INTRADAY_TWAP: int = 6
+INTRADAY_DATE: int = 7
 
-@numba.jit(nopython = True, nogil = True, cache = True)
-def open_col(array: np.ndarray, timeslot: np.float64):
-    if array.shape[1] == 8:
-        return array[array[:,0] == timeslot, 1]
-    raise NotImplementedError()
-
-@numba.jit(nopython = True, nogil = True, cache = True)
-def close_col(array: np.ndarray, timeslot: np.float64):
-    if array.shape[1] == 8:
-        return array[array[:,0] == timeslot, 4]
-    raise NotImplementedError()
-
-@numba.jit(nopython = True, nogil = True, cache = True)
-def high_col(array: np.ndarray, timeslot: np.float64):
-    if array.shape[1] == 8:
-        return array[array[:,0] == timeslot, 2]
-    raise NotImplementedError()
-
-@numba.jit(nopython = True, nogil = True, cache = True)
-def low_col(array: np.ndarray, timeslot: np.float64):
-    if array.shape[1] == 8:
-        return array[array[:,0] == timeslot, 3]
-    raise NotImplementedError()
-
-@numba.jit(nopython = True, nogil = True, cache = True)
-def volume_col(array: np.ndarray, timeslot: np.float64):
-    if array.shape[1] == 8:
-        return array[array[:,0] == timeslot, 5]
-    raise NotImplementedError()
-
-@numba.jit(nopython = True, nogil = True, cache = True)
-def twap_col(array: np.ndarray, timeslot: np.float64):
-    if array.shape[1] == 8:
-        return array[array[:,0] == timeslot, 6]
-    raise NotImplementedError()
+DAILY_OPEN: int = 0
+DAILY_HIGH: int = 1
+DAILY_LOW: int = 2
+DAILY_CLOSE: int = 3
+DAILY_VOLUME: int = 4
+DAILY_DATE: int = 5
+DAILY_TWAP: int = 6

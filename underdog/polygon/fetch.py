@@ -129,10 +129,10 @@ async def async_fetch_market(
 ) -> Optional[pd.DataFrame]:
     async with aiohttp.ClientSession() as session:
         dates = list(trading_daterange(
-            nth_previous_trading_date(2),
+            nth_previous_trading_date(504),
             nth_previous_trading_date(1)
         ))
-        for date in [np.float64(time.mktime(date.timetuple())) for date in dates]:
+        for date in [time.mktime(date.timetuple()) for date in dates]:
             if agg_df is None or len(agg_df[agg_df['date'] == date]) == 0:
                 df = await async_fetch_grouped_daily(
                     session,

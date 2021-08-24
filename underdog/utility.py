@@ -181,11 +181,13 @@ def twap(df: pd.DataFrame) -> pd.DataFrame:
     )
     return df
 
-def resolve_date(when: Optional[Union[str, datetime.date]] = None) -> datetime.date:
+def resolve_date(when: Optional[Union[str, datetime.date, np.datetime64]] = None) -> datetime.date:
     if not when:
         return datetime.datetime.today().date()
     if isinstance(when, str):
         return datetime.datetime.strptime(when, '%Y-%m-%d').date()
+    if isinstance(when, np.datetime64):
+        return pd.Timestamp(when).date()
     return when
 
 @functools.lru_cache(None)
@@ -194,7 +196,7 @@ def market_close_table(
 ):
     table = numba.typed.Dict.empty(
         key_type = numba.core.types.float64,
-        value_type = numba.core.types.float64
+        value_type = numba.core.types.int64
     )
     for (date, period_), timeslot in early_closes().items():
         if period_ == period:
@@ -202,7 +204,7 @@ def market_close_table(
     return table
 
 def market_close(
-    when: Optional[Union[str, datetime.date]] = None,
+    when: Optional[Union[str, datetime.date, np.datetime64]] = None,
     /, *,
     period: int = 1
 ) -> Optional[int]:
@@ -212,12 +214,12 @@ def market_close(
     except KeyError:
         return None
 
-def is_trading_date(when: Optional[Union[str, datetime.date]] = None) -> bool:
+def is_trading_date(when: Optional[Union[str, datetime.date, np.datetime64]] = None) -> bool:
     return resolve_date(when) in market_dates()
 
 def trading_days_between(
-    start: Union[str, datetime.date],
-    end: Optional[Union[str, datetime.date]] = None
+    start: Union[str, datetime.date, np.datetime64],
+    end: Optional[Union[str, datetime.date, np.datetime64]] = None
 ) -> int:
     dates = market_dates()
     start, end = (resolve_date(start), resolve_date(end))
@@ -231,7 +233,7 @@ def trading_days_between(
 
 def nth_next_trading_date(
     n: int = 1,
-    anchor: Optional[Union[str, datetime.date]] = None
+    anchor: Optional[Union[str, datetime.date, np.datetime64]] = None
 ) -> datetime.date:
     anchor = resolve_date(anchor)
     if n < 0:
@@ -244,7 +246,7 @@ def nth_next_trading_date(
 
 def nth_previous_trading_date(
     n: int = 1,
-    anchor: Optional[Union[str, datetime.date]] = None
+    anchor: Optional[Union[str, datetime.date, np.datetime64]] = None
 ) -> datetime.date:
     anchor = resolve_date(anchor)
     if n < 0:
@@ -256,8 +258,8 @@ def nth_previous_trading_date(
     return dates[start_index - n]
 
 def trading_daterange(
-    start: Union[str, datetime.date],
-    end: Optional[Union[str, datetime.date]] = None
+    start: Union[str, datetime.date, np.datetime64],
+    end: Optional[Union[str, datetime.date, np.datetime64]] = None
 ) -> Generator[datetime.date, None, None]:
     start, end = (resolve_date(start), resolve_date(end))
     dates = market_dates()
@@ -303,6 +305,14 @@ def encode_symbol(symbol: str) -> np.float64:
 def decode_symbol(n: np.float64) -> str:
     a = bitarray.bitarray(float_to_bin(n))
     return ''.join(a.decode(make_encoding()))
+
+def encode_date(date):
+    return time.mktime(
+        resolve_date(date).timetuple()
+    )
+
+def decode_date(timestamp):
+    return datetime.datetime.fromtimestamp(timestamp)
 
 # def twap_(o, h, l, c):
 #     oh = np.abs(o - h)
