@@ -33,6 +33,8 @@ TDA_ACCOUNT_ID | Account id for your TDA trading account
 
 ## Example Usage
 ```
+enable_tasks()
+
 # Create a cache of historic data for the defined symbols and update daily right after midnight
 symbols = ['TSLA', 'AAL', 'MSFT']
 schedule(update_cache, frequency = Frequency.DAY, period = 1, start = 'tomorrow 12:05 am', symbols = symbols)
